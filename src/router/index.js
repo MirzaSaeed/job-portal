@@ -1,20 +1,100 @@
 import { createRouter, createWebHistory } from "vue-router";
-import HomeView from "../views/HomeView.vue";
+import LoginView from "../views/LoginView.vue";
+import { useUserStore } from "@/store/user-store";
 
 const routes = [
+  // { redirect: "/login", path: "/" },
   {
     path: "/",
-    name: "home",
-    component: HomeView,
+    name: "login",
+    component: LoginView,
+    beforeEnter: (to, from, next) => {
+      const userStore = useUserStore();
+      if (userStore.isAuth) {
+        next("/dashboard");
+      } else {
+        next();
+      }
+    },
   },
   {
-    path: "/about",
-    name: "about",
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () =>
-      import(/* webpackChunkName: "about" */ "../views/AboutView.vue"),
+    path: "/set-password",
+    name: "password",
+    component: () => import("../views/SetPasswordView.vue"),
+    beforeEnter: (to, from, next) => {
+      const userStore = useUserStore();
+      if (userStore.isAuth) {
+        next("/dashboard");
+      } else {
+        next();
+      }
+    },
+  },
+  {
+    path: "/forget-password",
+    name: "forgetPassword",
+    component: () => import("../views/ForgetPasswordView.vue"),
+    beforeEnter: (to, from, next) => {
+      const userStore = useUserStore();
+      if (userStore.isAuth) {
+        next("/dashboard");
+      } else {
+        next();
+      }
+    },
+  },
+  {
+    path: "/job-application",
+    name: "jobApplication",
+    component: () => import("../views/JobApplicationView.vue"),
+    beforeEnter: (to, from, next) => {
+      const userStore = useUserStore();
+      if (userStore.isAuth) {
+        next("/dashboard");
+      } else {
+        next();
+      }
+    },
+  },
+  {
+    path: "/register",
+    name: "register",
+    component: () => import("../views/RegisterView.vue"),
+  },
+  {
+    path: "/dashboard",
+    name: "dashboard",
+    component: () => import("../views/DashboardView.vue"),
+    beforeEnter: (to, from, next) => {
+      const userStore = useUserStore();
+      if (userStore.isAuth) {
+        next();
+      } else {
+        next("/login");
+      }
+    },
+    children: [
+      {
+        path: "",
+        name: "dashboard",
+        component: () => import("../components/Dashboard.vue"),
+      },
+      {
+        path: "user-list",
+        name: "userList",
+        component: () => import("../components/UserList.vue"),
+      },
+      {
+        path: "activity-logs",
+        name: "activtiyLog",
+        component: () => import("../components/ActivityLog.vue"),
+      },
+      {
+        path: "job-applications",
+        name: "jobApplications",
+        component: () => import("../components/JobApplicationList.vue"),
+      },
+    ],
   },
 ];
 

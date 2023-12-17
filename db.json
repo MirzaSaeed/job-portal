@@ -1,0 +1,121 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "admin@test.com",
+      "password": "123",
+      "firstName": "Mirza",
+      "lastName": "Saeed",
+      "isAdmin": true,
+      "isVerified": true
+    },
+    {
+      "id": 2,
+      "email": "george.bluth@reqres.in",
+      "firstName": "George",
+      "lastName": "Bluth",
+      "isAdmin": false,
+      "isVerified": true
+    },
+    {
+      "id": 3,
+      "email": "janet.weaver@reqres.in",
+      "firstName": "Janet",
+      "lastName": "Weaver",
+      "isAdmin": false,
+      "isVerified": true
+    },
+    {
+      "id": 4,
+      "email": "emma.wong@reqres.in",
+      "firstName": "Emma",
+      "lastName": "Wong",
+      "isAdmin": false,
+      "isVerified": false
+    },
+    {
+      "id": 5,
+      "email": "eve.holt@reqres.in",
+      "firstName": "Eve",
+      "lastName": "Holt",
+      "isAdmin": false,
+      "isVerified": true
+    },
+    {
+      "id": 6,
+      "email": "charles.morris@reqres.in",
+      "firstName": "Charles",
+      "lastName": "Morris",
+      "isAdmin": false,
+      "isVerified": false
+    },
+    {
+      "id": 7,
+      "email": "tracey.ramos@reqres.in",
+      "firstName": "Tracey",
+      "lastName": "Ramos",
+      "isAdmin": false,
+      "isVerified": true
+    }
+  ],
+  "job-applications": [
+    {
+      "id": 1,
+      "email": "admin@test.com",
+      "password": "123",
+      "firstName": "Mirza",
+      "lastName": "Saeed",
+      "status": "pending"
+    },
+    {
+      "id": 2,
+      "email": "george.bluth@reqres.in",
+      "firstName": "George",
+      "lastName": "Bluth",
+      "status": "pending"
+    },
+    {
+      "id": 3,
+      "email": "janet.weaver@reqres.in",
+      "firstName": "Janet",
+      "lastName": "Weaver",
+      "status": "pending"
+    },
+    {
+      "id": 4,
+      "email": "emma.wong@reqres.in",
+      "firstName": "Emma",
+      "lastName": "Wong",
+      "status": "accepted"
+    },
+    {
+      "id": 5,
+      "email": "eve.holt@reqres.in",
+      "firstName": "Eve",
+      "lastName": "Holt",
+      "status": "rejected"
+    },
+    {
+      "id": 6,
+      "email": "charles.morris@reqres.in",
+      "firstName": "Charles",
+      "lastName": "Morris",
+      "status": "pending"
+    },
+    {
+      "id": 7,
+      "email": "tracey.ramos@reqres.in",
+      "firstName": "Tracey",
+      "lastName": "Ramos",
+      "status": "accepted"
+    }
+  ],
+  "me": [
+    {
+      "id": 1,
+      "email": "admin@test.com",
+      "firstName": "Mirza",
+      "lastName": "Saeed"
+    }
+  ]
+}
