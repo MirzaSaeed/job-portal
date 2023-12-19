@@ -60,11 +60,11 @@
                 rounded
                 dense
                 color="green"
-                v-model="text"
+                v-model="message"
                 label="Type message"
               >
                 <template v-slot:append>
-                  <q-icon name="send" color="green-4" />
+                  <q-icon name="send" @click.prevent="send" color="green-4" />
                 </template> </q-input
             ></q-item-section>
           </q-item>
@@ -75,15 +75,65 @@
 </template>
 
 <script setup>
-import { onBeforeMount, onMounted } from "vue";
+import {
+  onBeforeMount,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  watch,
+} from "vue";
 import { useUserStore } from "../store/user-store";
 import { storeToRefs } from "pinia";
+import { io } from "socket.io-client";
+import { HTTP } from "@/helper/http-config";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const userStore = useUserStore();
-const { loading } = storeToRefs(useUserStore());
+const { loading, profile } = storeToRefs(useUserStore());
+// const socket = io(process.env.VUE_APP_BASE_URL);
+let newMessage = ref(null);
+let typing = ref(false);
+let ready = ref(false);
+let info = reactive([]);
+let connections = ref(0);
+const messages = reactive([]);
+const userName = ref(null);
+
+// watch(newMessage, (newMessage, preNewMessage) => {
+//   newMessage ? socket.emit("typing", profile?.name) : socket.emit("stopTyping");
+// });
+
+// const send = () => {
+//   messages.push({
+//     message: newMessage.value,
+//     type: 0,
+//     user: "Me",
+//   });
+
+//   socket.emit("chat-message", {
+//     message: newMessage.value,
+//     user: profile?.name,
+//   });
+//   newMessage.value = "";
+// };
 
 onMounted(async () => {
   userStore.setLoading(true);
+  await HTTP.get(`/api/me`)
+    .then((res) => {
+      useUserStore().getProfileData(res.data);
+      useUserStore().setLoading(false);
+    })
+    .catch((err) => {
+      useUserStore().setLoading(false);
+      if (err.response?.status === 400) {
+        useUserStore().logoutUser();
+        router.push("/");
+      }
+    });
   setTimeout(() => {
     userStore.setLoading(false);
   }, 1000);
@@ -91,6 +141,9 @@ onMounted(async () => {
 onBeforeMount(() => {
   userStore.setHeader();
 });
+// onBeforeUnmount(() => {
+//   socket.disconnect();
+// });
 </script>
 
 <style scoped>

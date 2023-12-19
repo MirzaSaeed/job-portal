@@ -235,7 +235,7 @@ import { useComponentStore } from "@/store/component-store";
 import { useUserStore } from "@/store/user-store";
 import { storeToRefs } from "pinia";
 import { Notify } from "quasar";
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch, watchEffect } from "vue";
 import { useRouter } from "vue-router";
 import DialogBox from "./DialogBox.vue";
 
@@ -415,7 +415,7 @@ const handleVerification = async (userId, userEmail) => {
     });
 };
 
-watch(async () => {
+watchEffect(async () => {
   componentStore.setLoading(true);
   await HTTP.get(`api/getUser?search=${filter.value}`)
     .then((res) => {
@@ -444,7 +444,7 @@ watch(async () => {
       componentStore.setLoading(false);
     });
 });
-watch(async () => {
+watchEffect(async () => {
   componentStore.setLoading(true);
   await HTTP.get(`api/getUser?isVerified=${dropDownFilter.value}`)
     .then((res) => {
