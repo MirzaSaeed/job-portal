@@ -82,67 +82,43 @@ import { useUserStore } from "../store/user-store";
 import { useRouter } from "vue-router";
 import { HTTP } from "@/helper/http-config";
 
+const userStore = useUserStore();
+const { users, admin } = storeToRefs(useUserStore());
+
 const router = useRouter();
+
 const form = ref({
   email: "",
   password: "",
 });
-const userStore = useUserStore();
-const { users, admin } = storeToRefs(useUserStore());
 
 const isPwd = ref(true);
 
 const onSubmit = async () => {
-  console.log(form.value.email);
-  console.log(form.value.password);
+  userStore.setLoading(true);
 
-  // await HTTP.post(`users/login`, {
-  //   email: form.value.email,
-  //   password: form.value.password,
-  // })
-  //   .then((res) => {
-  //     const login = userStore.loginUser(res.data);
-  //     console.log(res);
-  //     login &&
-  //       Notify.create({
-  //         type: "positive",
-  //         position: "top",
-  //         message: "Login successful",
-  //       });
-  //     userStore.setLoading(false);
-  //     // router.push("/dashboard");
-  //   })
-  //   .catch((err) => {
-  //     Notify.create({
-  //       type: "negative",
-  //       position: "top",
-  //       message: "UnAuthorized User",
-  //     });
-  //   });
-
-  if (
-    admin.value.email === form.value.email &&
-    admin.value.password === form.value.password
-  ) {
-    {
-      //   userStore.setLoading(true);
-      const login = userStore.loginUser(admin.value);
-      login &&
-        Notify.create({
-          type: "positive",
-          position: "top",
-          message: "Login successful",
-        });
-
-      router.push("/dashboard/user-list");
-    }
-  } else {
-    Notify.create({
-      type: "negative",
-      position: "top",
-      message: "Invalid Credentials",
+  await HTTP.post(`api/login`, {
+    email: form.value.email,
+    password: form.value.password,
+  })
+    .then((res) => {
+      const login = userStore.loginUser(res.data.data);
+      userStore.setToken(res.data.data.token);
+      Notify.create({
+        type: "positive",
+        position: "top",
+        message: "Login successful",
+      });
+      router.push("/dashboard");
+    })
+    .catch((err) => {
+      userStore.setLoading(false);
+      Notify.create({
+        type: "negative",
+        position: "top",
+        message: "Invalid Credentials",
+      });
     });
-  }
 };
 </script>
 

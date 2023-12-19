@@ -50,23 +50,6 @@
         </q-form>
       </q-card-section>
     </q-card>
-
-    <!-- <q-card v-else-if="toggleUser" class="my-card">
-      <q-card-section class="row items-center q-pb-none">
-        <div class="text-h6">User Profile</div>
-        <q-space />
-        <q-btn icon="close" flat round dense v-close-popup />
-      </q-card-section>
-
-      <q-card-section>
-        <div class="text-h6">
-          <span>Name: </span> {{ userData.firstName }} {{ userData.lastName }}
-        </div>
-        <div class="text-subtitle2">
-          <span>Email: </span>{{ userData.email }}
-        </div>
-      </q-card-section>
-    </q-card> -->
   </q-dialog>
 </template>
 
@@ -77,8 +60,14 @@ import { storeToRefs } from "pinia";
 import { ref } from "vue";
 import { HTTP } from "@/helper/http-config";
 import { Notify } from "quasar";
+import { useUserStore } from "@/store/user-store";
+import { useRouter } from "vue-router";
 
 defineProps(["userData", "formData", "toggleUser"]);
+
+const router = useRouter();
+
+const userStore = useUserStore();
 
 const { dialog } = storeToRefs(useComponentStore());
 const form = ref({
@@ -88,54 +77,33 @@ const form = ref({
 });
 
 const onSubmit = async () => {
-  console.log(form.value.email);
-
-  await HTTP.post(`users/createuser`, {
+  await HTTP.post(`api/createuser`, {
     email: form.value.email,
     firstName: form.value.firstName,
     lastName: form.value.lastName,
   })
     .then((res) => {
-      debugger;
-      console.log(res);
+      userStore.setLoading(true);
       Notify.create({
         type: "positive",
         position: "top",
         message: "Verification email has been send.",
       });
+      useComponentStore().toggleDialog();
       userStore.setLoading(false);
     })
     .catch((err) => {
-      Notify.create({
-        type: "negative",
-        position: "top",
-        message: "User is not created",
-      });
+      if (err.response.status === 400) {
+        useUserStore().logoutUser();
+        router.push("/");
+      } else {
+        Notify.create({
+          type: "negative",
+          position: "top",
+          message: "User is already exist",
+        });
+      }
     });
-
-  // if (
-  //   admin.value.email === form.value.email &&
-  //   admin.value.password === form.value.password
-  // ) {
-  //   {
-  //     //   userStore.setLoading(true);
-  //     const login = userStore.loginUser(admin.value);
-  //     login &&
-  //       Notify.create({
-  //         type: "positive",
-  //         position: "top",
-  //         message: "Login successful",
-  //       });
-
-  //     router.push("/dashboard/user-list");
-  //   }
-  // } else {
-  //   Notify.create({
-  //     type: "negative",
-  //     position: "top",
-  //     message: "Invalid Credentials",
-  //   });
-  // }
 };
 </script>
 

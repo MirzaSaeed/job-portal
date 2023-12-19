@@ -15,7 +15,7 @@
           <div class="q-px-md">
             <p>
               Total Users:
-              <span class="text-bold">{{ totalUsers }}</span>
+              <span class="text-bold">{{ users?.pagination?.totalUsers }}</span>
             </p>
             <p>
               Total Verified Users:
@@ -32,9 +32,11 @@
             :loading="loading"
             bordered
             title="Users"
-            :rows="filteredUsers"
+            row-key="index"
+            :rows="users?.data"
             :columns="columns"
             virtual-scroll
+            :pagination="pagination"
             :filter="filter"
           >
             <!-- top  -->
@@ -43,7 +45,7 @@
               <q-btn
                 flat
                 color="green"
-                @click="toggleDialog"
+                @click="handleCreateForm"
                 type="submit"
                 rounded
                 label="Create User"
@@ -56,7 +58,7 @@
                     clickable
                     v-close-popup
                     v-model="dropDownFilter"
-                    @click="setFilter(null)"
+                    @click="setFilter('')"
                   >
                     <q-item-section>
                       <q-item-label>All</q-item-label>
@@ -105,9 +107,9 @@
 
             <!-- body  -->
             <template v-slot:body="props">
-              <q-tr :props="props" @click="onRowClick(props.row.id)">
-                <q-td key="id" :props="props">
-                  {{ props.row.id }}
+              <q-tr :props="props">
+                <q-td key="index" :props="props">
+                  {{ users?.data?.indexOf(props.row) + 1 }}
                 </q-td>
                 <q-td key="firstName" :props="props">
                   {{ props.row.firstName }}
@@ -139,6 +141,9 @@
                     v-if="!props.row.isVerified"
                     icon="send"
                     size="sm"
+                    @click="
+                      handleVerification(props.row.userId, props.row.email)
+                    "
                     color="white"
                     text-color="black"
                     toggleUser="true"
@@ -154,7 +159,7 @@
                     icon="visibility"
                     color="white"
                     text-color="black"
-                    @click="onRowClick(props.row.id)"
+                    @click="onRowClick(props.row.userId)"
                     toggleUser="true"
                     size="sm"
                     class="nav-link"
@@ -167,8 +172,57 @@
               </q-tr>
             </template>
 
-            <DialogBox />
+            <!-- pagination  -->
+            <template v-slot:pagination="">
+              <q-btn
+                icon="chevron_left"
+                color="grey-8"
+                round
+                dense
+                flat
+                :disable="
+                  users?.pagination?.hasPrevPage === false ? true : false
+                "
+                @click="handlePage(page - 1)"
+              />
+
+              <q-btn
+                icon="chevron_right"
+                color="grey-8"
+                round
+                dense
+                flat
+                :disable="
+                  users?.pagination?.hasNextPage === false ? true : false
+                "
+                @click="handlePage(page + 1)"
+              />
+            </template>
           </q-table>
+
+          <q-dialog v-model="dialogValue">
+            <q-card class="my-card">
+              <q-card-section class="row items-center q-pb-none">
+                <div class="text-subtitle1">User Profile</div>
+                <q-space />
+                <q-btn icon="close" flat round dense v-close-popup />
+              </q-card-section>
+              <q-item class="q-pb-lg">
+                <q-item-section side>
+                  <q-avatar round size="48px">
+                    <img src="../assets/svg-icon/user-profile.svg" alt="" />
+                  </q-avatar>
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>
+                    {{ user?.firstName }} {{ user?.lastName }}</q-item-label
+                  >
+                  <q-item-label caption>{{ user?.email }}</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-card>
+          </q-dialog>
+          <DialogBox />
         </div>
       </q-item-section>
     </q-item>
@@ -181,25 +235,36 @@ import { useComponentStore } from "@/store/component-store";
 import { useUserStore } from "@/store/user-store";
 import { storeToRefs } from "pinia";
 import { Notify } from "quasar";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 import DialogBox from "./DialogBox.vue";
 
+const router = useRouter();
+
 const componentStore = useComponentStore();
+const userStore = useUserStore();
+const { user } = storeToRefs(useUserStore());
+const { loading } = storeToRefs(useComponentStore());
 
 const filter = ref("");
-const dropDownFilter = ref(null);
-const users = ref([]);
-const userStore = useUserStore();
+const dropDownFilter = ref("");
+const users = ref({});
+const userInfo = ref({});
+const dialogValue = ref(false);
+const page = ref(1);
+const pagination = ref({
+  sortBy: "desc",
+  descending: true,
+  page: 1,
+  totalItems: 0,
+  rowsPerPage: 10,
+});
 
 const columns = [
   {
-    name: "id",
-    required: true,
+    name: "index",
     label: "Id",
-    align: "left",
-    field: "id",
-    format: (val) => `${val}`,
-    sortable: true,
+    field: "index",
   },
   {
     name: "firstName",
@@ -235,7 +300,6 @@ const columns = [
   },
 ];
 
-const { loading } = storeToRefs(useComponentStore());
 let totalUsers;
 let totalVerifiedUsers;
 let totalNotVerifiedUsers;
@@ -244,43 +308,36 @@ const toggleDialog = () => {
   componentStore.toggleDialog();
 };
 
-const filteredUsers = computed(() => {
-  return users.value.filter((user) => {
-    if (dropDownFilter.value === true) {
-      return user.isVerified === true;
-    } else if (dropDownFilter.value === false) {
-      return user.isVerified === false;
-    } else {
-      return (
-        user.firstName.toLowerCase().includes(filter.value.toLowerCase()) ||
-        user.lastName.toLowerCase().includes(filter.value.toLowerCase()) ||
-        user.email.toLowerCase().includes(filter.value.toLowerCase())
-      );
-    }
-  });
-});
+const handleCreateForm = () => {
+  toggleDialog();
+};
 
 const setFilter = (status) => {
   dropDownFilter.value = status;
 };
-
-const rows = filteredUsers;
-
-const onRowClick = (id) => {
-  console.log("user view");
+const handlePage = (pageNumber) => {
+  page.value = pageNumber;
+  handlePagination(page.value);
 };
 
-onMounted(async () => {
+const handlePagination = async (pageNumber) => {
   componentStore.setLoading(true);
-  await HTTP.get(`users`)
+  await HTTP.get(
+    `api/getUser?page=${pageNumber}&search=${filter.value}&isVerified=${dropDownFilter.value}`
+  )
     .then((res) => {
       componentStore.setLoading(false);
       users.value = res.data;
-      totalUsers = res.data.length;
-      totalVerifiedUsers = users.value.filter(
+      page.value = res.data.pagination.page;
+      pagination.page = res.data.pagination.page;
+      pagination.rowsPerPage = res.data.pagination.page;
+      pagination.totalItems = res.data.pagination.totalUsers;
+
+      totalUsers = res.data.pagination.totalUsers;
+      totalVerifiedUsers = users.value?.data?.filter(
         (user) => user.isVerified && user
       ).length;
-      totalNotVerifiedUsers = users.value.filter((user) => {
+      totalNotVerifiedUsers = users.value?.data?.filter((user) => {
         if (!user.isVerified) {
           return users;
         }
@@ -288,14 +345,138 @@ onMounted(async () => {
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      Notify.create({
-        message: "Users Not Found",
-        type: "negative",
-        position: "top",
-      }).finally(() => {
-        componentStore.setLoading(false);
-      });
+      if (err.response.status === 400) {
+        useUserStore().logoutUser();
+        router.push("/");
+      } else {
+        Notify.create({
+          message: "Users Not Found",
+          type: "negative",
+          position: "top",
+        });
+      }
+    })
+    .finally(() => {
+      componentStore.setLoading(false);
     });
+};
+
+const onRowClick = async (id) => {
+  componentStore.setLoading(true);
+  await HTTP.get(`api/userprofile/${id}`)
+    .then((res) => {
+      componentStore.setLoading(false);
+      userStore.getUser(res.data);
+      dialogValue.value = true;
+    })
+
+    .catch((err) => {
+      componentStore.setLoading(false);
+      if (err.response.status === 400) {
+        useUserStore().logoutUser();
+        router.push("/");
+      } else {
+        Notify.create({
+          message: "User Not Found",
+          type: "negative",
+          position: "top",
+        });
+      }
+    })
+    .finally(() => {
+      componentStore.setLoading(false);
+    });
+};
+
+const handleVerification = async (userId, userEmail) => {
+  componentStore.setLoading(true);
+  await HTTP.patch(`api/verifyuser/${userId}`)
+    .then((res) => {
+      componentStore.setLoading(false);
+      Notify.create({
+        message: `Email have been send for verified on ${userEmail}`,
+        type: "positive",
+        position: "top",
+      });
+    })
+    .catch((err) => {
+      componentStore.setLoading(false);
+      if (err.response.status === 400) {
+        useUserStore().logoutUser();
+        router.push("/");
+      } else {
+        Notify.create({
+          message: "User Not Found",
+          type: "negative",
+          position: "top",
+        });
+      }
+    })
+    .finally(() => {
+      componentStore.setLoading(false);
+    });
+};
+
+watch(async () => {
+  componentStore.setLoading(true);
+  await HTTP.get(`api/getUser?search=${filter.value}`)
+    .then((res) => {
+      componentStore.setLoading(false);
+      users.value = res.data;
+      page.value = res.data.pagination.page;
+      pagination.page = res.data.pagination.page;
+      pagination.rowsPerPage = res.data.pagination.page;
+      pagination.totalItems = res.data.pagination.totalUsers;
+    })
+    .catch((err) => {
+      componentStore.setLoading(false);
+      if (err.response.status === 400) {
+        useUserStore().logoutUser();
+        router.push("/");
+      } else {
+        Notify.create({
+          message: "Users Not Found",
+          type: "negative",
+          position: "top",
+        });
+      }
+    })
+    .finally(() => {
+      componentStore.setLoading(false);
+    });
+});
+watch(async () => {
+  componentStore.setLoading(true);
+  await HTTP.get(`api/getUser?isVerified=${dropDownFilter.value}`)
+    .then((res) => {
+      componentStore.setLoading(false);
+      users.value = res.data;
+      page.value = res.data.pagination.page;
+      pagination.page = res.data.pagination.page;
+      pagination.rowsPerPage = res.data.pagination.page;
+      pagination.totalItems = res.data.pagination.totalUsers;
+    })
+    .catch((err) => {
+      componentStore.setLoading(false);
+      if (err.response.status === 400) {
+        useUserStore().logoutUser();
+        router.push("/");
+      } else {
+        Notify.create({
+          message: "Users Not Found",
+          type: "negative",
+          position: "top",
+        });
+      }
+    })
+    .finally(() => {
+      componentStore.setLoading(false);
+    });
+});
+
+onMounted(async () => {
+  componentStore.setLoading(true);
+  handlePagination(page.value);
 });
 </script>
 

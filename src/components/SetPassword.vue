@@ -2,7 +2,7 @@
   <q-card class="my-card shadow-0 text-center">
     <q-card-section class="q-my-lg">
       <div class="text-h6 text-weight-bold">
-        Your account is being <span style="color: green">verified!</span>
+        Your account is <span style="color: green">verified!</span>
       </div>
     </q-card-section>
     <q-card-section class="q-my-md">
@@ -15,7 +15,7 @@
       />
     </q-card-section>
     <q-card-section class="q-pt-none q-px-lg q-mx-md">
-      <div class="text-subtitle2 text-center">Now set up your password</div>
+      <div class="text-subtitle2 text-center">Now set password</div>
       <q-form @submit.prevent="onSubmit">
         <q-input
           class="q-py-sm q-mb-lg"
@@ -76,15 +76,19 @@ import { ref } from "vue";
 import { Notify, useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
 import { useUserStore } from "../store/user-store";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { HTTP } from "@/helper/http-config";
 
+const userStore = useUserStore();
+const { users } = storeToRefs(useUserStore());
+
 const router = useRouter();
+const route = useRoute();
+
 const form = ref({
   password: "",
   confirmPassword: "",
 });
-const userStore = useUserStore();
 const rules = [
   (val) =>
     (val && val.length > 2) || "Password must contain at least 3 characters",
@@ -99,31 +103,31 @@ const rules = [
     /[!@#$%^&*(),.?":{}|<>]/.test(val) ||
     "Password must contain at least one symbol",
 ];
-const { users } = storeToRefs(useUserStore());
 
 const isPwd = ref(true);
 
 const onSubmit = async () => {
-  // await HTTP.post(`user/set-password`, {
-  //   password: form.value.password,
-  //   confirmPassword: form.value.confirmPassword,
-  // })
-  //   .then((res) => {
-  //       Notify.create({
-  //         type: "positive",
-  //         position: "top",
-  //         message: "Password has been created successful",
-  //       });
-  //     userStore.setLoading(false);
-  // router.push("/");
-  //   })
-  //   .catch((err) => {
-  //     Notify.create({
-  //       type: "negative",
-  //       position: "top",
-  // message: "Password does not Match",
-  //     });
-  //   });
+  await HTTP.post(`api/setpassword`, {
+    password: form.value.password,
+    confirmPassword: form.value.confirmPassword,
+    token: route.params.token,
+  })
+    .then((res) => {
+      Notify.create({
+        type: "positive",
+        position: "top",
+        message: "Password has been created successful",
+      });
+      userStore.setLoading(false);
+      router.push("/");
+    })
+    .catch((err) => {
+      Notify.create({
+        type: "negative",
+        position: "top",
+        message: "Link is expired cannot set password",
+      });
+    });
 };
 </script>
 

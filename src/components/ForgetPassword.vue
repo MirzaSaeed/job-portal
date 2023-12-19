@@ -63,32 +63,42 @@ import { useRouter } from "vue-router";
 import { HTTP } from "@/helper/http-config";
 
 const router = useRouter();
-const form = ref({
-  email: "",
-});
+
 const userStore = useUserStore();
 const { users, admin } = storeToRefs(useUserStore());
 
+const form = ref({
+  email: "",
+});
+
 const onSubmit = async () => {
-  // await HTTP.post(`forget-password`, {
-  //   email: form.value.email,
-  // })
-  //   .then((res) => {
-  // form.value.email = " "
-  //     Notify.create({
-  //       type: "positive",
-  //       position: "top",
-  //       message: "Check your email account",
-  //     });
-  //     userStore.setLoading(true);
-  //   })
-  //   .catch((err) => {
-  //     Notify.create({
-  //       type: "negative",
-  //       position: "top",
-  //       message: "Not Registered User",
-  //     });
-  //   });
+  userStore.setLoading(true);
+
+  await HTTP.post(`api/forgetpassword`, {
+    email: form.value.email,
+  })
+    .then((res) => {
+      form.value.email = " ";
+      userStore.setLoading(false);
+
+      Notify.create({
+        type: "positive",
+        position: "top",
+        message: "Check your email account",
+      });
+    })
+    .catch((err) => {
+      userStore.setLoading(false);
+
+      Notify.create({
+        type: "negative",
+        position: "top",
+        message: "Not Registered User",
+      });
+    })
+    .finally(() => {
+      userStore.setLoading(false);
+    });
 };
 </script>
 

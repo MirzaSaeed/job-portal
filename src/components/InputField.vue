@@ -27,5 +27,3 @@ const updateModelValue = (event) => {
   emit("input", event.target.value);
 };
 </script>
-
-<style></style>

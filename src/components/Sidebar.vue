@@ -37,7 +37,11 @@
         </router-link>
 
         <q-separator />
-        <router-link to="/dashboard/activity-logs" class="sidebar-link-item">
+        <router-link
+          v-if="isAdmin"
+          to="/dashboard/activity-logs"
+          class="sidebar-link-item"
+        >
           <q-item class="sidebar-list q-py-md" clickable v-ripple>
             <q-item-section avatar>
               <q-icon class="sidebar-item" name="list" color="black" />
@@ -47,7 +51,7 @@
             </q-item-section>
           </q-item>
         </router-link>
-        <q-separator />
+        <q-separator v-if="isAdmin" />
         <router-link to="/dashboard/job-applications" class="sidebar-link-item">
           <q-item class="sidebar-list q-py-md" clickable v-ripple>
             <q-item-section avatar>
@@ -66,9 +70,11 @@
 
 <script setup>
 import { useComponentStore } from "@/store/component-store";
+import { useUserStore } from "@/store/user-store";
 import { storeToRefs } from "pinia";
 
 const { drawer } = storeToRefs(useComponentStore());
+const { isAdmin } = storeToRefs(useUserStore());
 
 const toggleDrawer = () => {
   useComponentStore().toggleDrawer();
@@ -86,10 +92,7 @@ const toggleDrawer = () => {
   scale: 1.1;
   transition: all ease-in-out 0.2s;
 }
-/* .sidebar-item {
-  color: #53af50;
-  font-weight: 400;
-} */
+
 @keyframes fadeIn {
   0% {
     opacity: 0;
@@ -107,5 +110,11 @@ const toggleDrawer = () => {
   .close-btn {
     display: none;
   }
+}
+
+a.router-link-exact-active .sidebar-item {
+   color: #a5d6a7 !important;
+  scale: 1.1;
+
 }
 </style>

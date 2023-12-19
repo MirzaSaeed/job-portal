@@ -18,8 +18,9 @@
             :loading="loading"
             bordered
             title="Job Application List"
-            :rows="filteredApplications"
+            :rows="applicationList?.data"
             :columns="columns"
+            :pagination="pagination"
             virtual-scroll
             :filter="filter"
           >
@@ -89,18 +90,19 @@
 
             <!-- body  -->
             <template v-slot:body="props">
-              <q-tr :props="props" @click="onRowClick(props.row.id)">
-                <q-td key="id" :props="props">
-                  {{ props.row.id }}
+              <q-tr :props="props">
+                <q-td key="index" :props="props">
+                  {{ applicationList?.data?.indexOf(props.row) + 1 }}
                 </q-td>
-                <q-td key="firstName" :props="props">
-                  {{ props.row.firstName }}
+                <q-td key="userName" :props="props">
+                  {{ props.row.userName }}
                 </q-td>
-                <q-td key="lastName" :props="props">
-                  {{ props.row.lastName }}
-                </q-td>
+
                 <q-td key="email" :props="props">
                   {{ props.row.email }}
+                </q-td>
+                <q-td key="age" :props="props">
+                  {{ props.row.age }}
                 </q-td>
                 <q-td key="status" :props="props">
                   <q-badge
@@ -131,6 +133,7 @@
                       text-color="green"
                       toggleUser="true"
                       label="Accept"
+                      @click="handleAction('accepted', props.row.applicantId)"
                       class="nav-accept"
                     ></q-btn>
                     <q-btn
@@ -140,6 +143,7 @@
                       rounded
                       toggleUser="true"
                       label="Reject"
+                      @click="handleAction('rejected', props.row.applicantId)"
                       class="nav-reject"
                     ></q-btn>
                   </span>
@@ -149,7 +153,7 @@
                     icon="visibility"
                     color="white"
                     text-color="black"
-                    @click="onRowClick(props.row.id)"
+                    @click="onRowClick(props.row.applicantId)"
                     toggleUser="true"
                     size="sm"
                     class="nav-link"
@@ -163,10 +167,12 @@
                   <q-btn
                     flat
                     round
-                    icon="visibility"
+                    icon="description"
                     color="white"
                     text-color="black"
-                    @click="downloadCV(props.row.id)"
+                    @click="
+                      downloadCV(props.row.applicantId, props.row.userName)
+                    "
                     toggleUser="true"
                     size="sm"
                     class="nav-link"
@@ -178,8 +184,81 @@
                 </q-td>
               </q-tr>
             </template>
+            <template v-slot:pagination="">
+              <q-btn
+                icon="chevron_left"
+                color="grey-8"
+                round
+                dense
+                flat
+                :disable="
+                  applicationList?.pagination?.hasPrevPage === false
+                    ? true
+                    : false
+                "
+                @click="handlePage(page - 1)"
+              />
 
-            <DialogBox />
+              <q-btn
+                icon="chevron_right"
+                color="grey-8"
+                round
+                dense
+                flat
+                :disable="
+                  applicationList?.pagination?.hasNextPage === false
+                    ? true
+                    : false
+                "
+                @click="handlePage(page + 1)"
+              />
+            </template>
+            <q-dialog v-model="dialogValue">
+              <q-card class="my-card">
+                <q-card-section class="row items-center q-pb-none">
+                  <div class="text-subtitle1">Applicant Profile</div>
+                  <q-space />
+                  <q-btn icon="close" flat round dense v-close-popup />
+                </q-card-section>
+                <q-item class="q-pb-lg">
+                  <q-item-section side>
+                    <q-avatar round size="48px">
+                      <img src="../assets/svg-icon/user-profile.svg" alt="" />
+                    </q-avatar>
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>
+                      Name:
+                      <span> {{ user?.userName }} </span>
+                    </q-item-label>
+                    <q-item-label>
+                      Email:
+                      <span> {{ user?.email }} </span>
+                    </q-item-label>
+                    <q-item-label>
+                      CNIC:
+                      <span> {{ user?.cnic }} </span>
+                    </q-item-label>
+                    <q-item-label>
+                      Phone Number:
+                      <span> {{ user?.phoneNumber }} </span>
+                    </q-item-label>
+                    <q-item-label>
+                      Age:
+                      <span> {{ user?.age }} </span>
+                    </q-item-label>
+                    <q-item-label>
+                      Qualification:
+                      <span> {{ user?.qualification }} </span>
+                    </q-item-label>
+                    <q-item-label>
+                      Address:
+                      <span> {{ user?.address }} </span>
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-card>
+            </q-dialog>
           </q-table>
         </div>
       </q-item-section>
@@ -193,44 +272,58 @@ import { useComponentStore } from "@/store/component-store";
 import { useUserStore } from "@/store/user-store";
 import { storeToRefs } from "pinia";
 import { Notify } from "quasar";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 import DialogBox from "./DialogBox.vue";
 
+const router = useRouter();
+
 const componentStore = useComponentStore();
+const userStore = useUserStore();
+const { loading } = storeToRefs(useComponentStore());
 
 const filter = ref("");
 const dropDownFilter = ref("");
-const applicationList = ref([]);
-const userStore = useUserStore();
+const applicationList = ref({});
+const userInfo = ref({});
+const page = ref(1);
+const pagination = ref({
+  sortBy: "desc",
+  descending: true,
+  page: 1,
+  totalItems: 0,
+  rowsPerPage: 10,
+});
+
 const columns = [
   {
-    name: "id",
+    name: "index",
     required: true,
     label: "Id",
     align: "left",
-    field: "id",
+    field: "index",
     format: (val) => `${val}`,
-    sortable: true,
   },
   {
-    name: "firstName",
+    name: "userName",
     align: "center",
-    label: "First Name",
-    field: "firstName",
+    label: "Name",
+    field: "userName",
     sortable: true,
   },
-  {
-    name: "lastName",
-    align: "center",
-    label: "Last Name",
-    field: "lastName",
-    sortable: true,
-  },
+
   {
     name: "email",
     align: "left",
     label: "Email Address",
     field: "email",
+  },
+  {
+    name: "age",
+    align: "center",
+    label: "Age",
+    field: "age",
+    sortable: true,
   },
   {
     name: "status",
@@ -252,51 +345,200 @@ const columns = [
   },
 ];
 
-const { loading } = storeToRefs(useComponentStore());
-
 const toggleDialog = () => {
   componentStore.toggleDialog();
 };
 
-const filteredApplications = computed(() => {
-  return applicationList.value.filter((user) => {
-    return (
-      user.firstName.toLowerCase().includes(filter.value.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(filter.value.toLowerCase()) ||
-      user.email.toLowerCase().includes(filter.value.toLowerCase()) ||
-      user.status.toLowerCase().includes(dropDownFilter.value.toLowerCase())
-    );
-  });
-});
+const handlePage = (pageNumber) => {
+  page.value = pageNumber;
+  handlePagination(page.value);
+};
 
 const setFilter = (status) => {
-  filter.value = status;
   dropDownFilter.value = status;
 };
 
-const rows = filteredApplications;
-
-const onRowClick = (id) => {
-  console.log("user view");
-};
-
-onMounted(async () => {
+const onRowClick = async (applicantId) => {
   componentStore.setLoading(true);
-  await HTTP.get(`job-applications`)
+  await HTTP.get(`api/applicatprofile/${applicantId}`)
     .then((res) => {
       componentStore.setLoading(false);
-      applicationList.value = res.data;
+      userInfo.value = res.data.data;
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      Notify.create({
-        message: "Users Applications Not Found",
-        type: "negative",
-        position: "top",
-      }).finally(() => {
+      if (err.response.status === 400) {
+        useUserStore().logoutUser();
+        router.push("/");
+      } else {
+        Notify.create({
+          message: "Users Applications Not Found",
+          type: "negative",
+          position: "top",
+        });
+      }
+    })
+    .finally(() => {
+      componentStore.setLoading(false);
+    });
+};
+
+const handleAction = async (action, applicantId) => {
+  componentStore.setLoading(true);
+  await HTTP.patch(`api/update-applicants/${applicantId}`, { status: action })
+    .then((res) => {
+      handlePagination(page.value).then(() => {
         componentStore.setLoading(false);
       });
+    })
+    .catch((err) => {
+      componentStore.setLoading(false);
+      if (err.response.status === 400) {
+        useUserStore().logoutUser();
+        router.push("/");
+      } else {
+        Notify.create({
+          message: "Users Application status not updated",
+          type: "negative",
+          position: "top",
+        });
+      }
+    })
+    .finally(() => {
+      componentStore.setLoading(false);
     });
+};
+const downloadCV = async (applicantId, userName) => {
+  componentStore.setLoading(true);
+
+  await HTTP.get(`/api/download-cv/${applicantId}`, {
+    responseType: "blob",
+  })
+    .then((res) => {
+      const contentDisposition = res.headers["content-disposition"];
+      const matches =
+        contentDisposition && contentDisposition.match(/filename="(.+)"/);
+      const suggestedFilename = matches && matches[1];
+
+      const blob = new Blob([res.data], {
+        type: res.headers["content-type"],
+      });
+
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(blob);
+
+      link.download = suggestedFilename || `CV_${userName}.pdf`;
+
+      link.click();
+      componentStore.setLoading(false);
+    })
+    .catch((err) => {
+      componentStore.setLoading(false);
+      if (err.response.status === 400) {
+        useUserStore().logoutUser();
+        router.push("/");
+      } else {
+        Notify.create({
+          message: "Error in downloading CV",
+          type: "negative",
+          position: "top",
+        });
+      }
+    });
+};
+
+const handlePagination = async (pageNumber) => {
+  componentStore.setLoading(true);
+  await HTTP.get(
+    `api/get-applicants?page=${pageNumber}&search=${filter.value}&status=${dropDownFilter.value}`
+  )
+    .then((res) => {
+      componentStore.setLoading(false);
+
+      applicationList.value = res.data;
+      page.value = res.data.pagination.page;
+      pagination.page = res.data.pagination.page;
+      pagination.rowsPerPage = res.data.pagination.page;
+      pagination.totalItems = res.data.pagination.totalUsers;
+    })
+    .catch((err) => {
+      componentStore.setLoading(false);
+      if (err.response.status === 400) {
+        useUserStore().logoutUser();
+        router.push("/");
+      } else {
+        Notify.create({
+          message: "Applications Not Found",
+          type: "negative",
+          position: "top",
+        });
+      }
+    })
+    .finally(() => {
+      componentStore.setLoading(false);
+    });
+};
+
+watch(async () => {
+  componentStore.setLoading(true);
+  await HTTP.get(`api/get-applicants?search=${filter.value}`)
+    .then((res) => {
+      componentStore.setLoading(false);
+      applicationList.value = res.data;
+      page.value = res.data.pagination.page;
+      pagination.page = res.data.pagination.page;
+      pagination.rowsPerPage = res.data.pagination.page;
+      pagination.totalItems = res.data.pagination.totalUsers;
+    })
+    .catch((err) => {
+      componentStore.setLoading(false);
+      if (err.response.status === 400) {
+        useUserStore().logoutUser();
+        router.push("/");
+      } else {
+        Notify.create({
+          message: "Users Not Found",
+          type: "negative",
+          position: "top",
+        });
+      }
+    })
+    .finally(() => {
+      componentStore.setLoading(false);
+    });
+});
+watch(async () => {
+  componentStore.setLoading(true);
+  await HTTP.get(`api/get-applicants?status=${dropDownFilter.value}`)
+    .then((res) => {
+      componentStore.setLoading(false);
+      applicationList.value = res.data;
+      page.value = res.data.pagination.page;
+      pagination.page = res.data.pagination.page;
+      pagination.rowsPerPage = res.data.pagination.page;
+      pagination.totalItems = res.data.pagination.totalUsers;
+    })
+    .catch((err) => {
+      componentStore.setLoading(false);
+      if (err.response.status === 400) {
+        useUserStore().logoutUser();
+        router.push("/");
+      } else {
+        Notify.create({
+          message: "Users Not Found",
+          type: "negative",
+          position: "top",
+        });
+      }
+    })
+    .finally(() => {
+      componentStore.setLoading(false);
+    });
+});
+
+onMounted(async () => {
+  componentStore.setLoading(true);
+  handlePagination(page.value);
 });
 </script>
 

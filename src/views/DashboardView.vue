@@ -75,7 +75,7 @@
 </template>
 
 <script setup>
-import { onMounted } from "vue";
+import { onBeforeMount, onMounted } from "vue";
 import Sidebar from "../components/Sidebar.vue";
 import { useUserStore } from "../store/user-store";
 import Dashboard from "../components/Dashboard.vue";
@@ -83,16 +83,16 @@ import { storeToRefs } from "pinia";
 import { HTTP } from "@/helper/http-config";
 
 const userStore = useUserStore();
-const { loading } = storeToRefs(useUserStore());
+const { loading, setHeader } = storeToRefs(useUserStore());
 
 onMounted(async () => {
   userStore.setLoading(true);
   setTimeout(() => {
     userStore.setLoading(false);
   }, 1000);
-  await HTTP.get(`me`).then((res) => {
-    userStore.getProfileData(res.data);
-  });
+});
+onBeforeMount(() => {
+  userStore.setHeader();
 });
 </script>
 

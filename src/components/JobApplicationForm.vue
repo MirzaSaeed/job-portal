@@ -160,8 +160,13 @@ import { Notify, useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
 import { useUserStore } from "../store/user-store";
 import { useRouter } from "vue-router";
+import { HTTP } from "@/helper/http-config";
 
 const router = useRouter();
+
+const userStore = useUserStore();
+const { users, admin } = storeToRefs(useUserStore());
+
 const form = ref({
   userName: "",
   email: "",
@@ -172,6 +177,7 @@ const form = ref({
   qualification: "",
   cv: "",
 });
+
 const options = [
   "Matric",
   "Intermediate",
@@ -179,9 +185,6 @@ const options = [
   "Master",
   "PhD",
 ];
-console.log(form.value.cv, "CV");
-const userStore = useUserStore();
-const { users, admin } = storeToRefs(useUserStore());
 
 function checkFileType(files) {
   return files.filter((file) => file.type === "image/png");
@@ -198,55 +201,41 @@ function checkFileSize(files) {
 }
 
 const onSubmit = async () => {
-  console.log(form.value.email);
-  console.log(form.value.cv);
+  const formData = new FormData();
+  formData.append("userName", form.value.userName);
+  formData.append("email", form.value.email);
+  formData.append("cnic", form.value.cnic);
+  formData.append("address", form.value.address);
+  formData.append("qualification", form.value.qualification);
+  formData.append("age", form.value.age);
+  formData.append("phoneNumber", form.value.phoneNumber);
+  formData.append("cv", form.value.cv);
 
-  //   await HTTP.post(`job-application`, {
-  //     email: form.value.email,
-  //     userName: form.value.userName,
-  //   })
-  //     .then((res) => {
-  //       const login = userStore.loginUser(res.data);
-  //       login &&
-  //         Notify.create({
-  //           type: "positive",
-  //           position: "top",
-  //           message: "Login successful",
-  //         });
-  //       userStore.setLoading(true);
-  //       router.push("/dashboard");
-  //     })
-  //     .catch((err) => {
-  //       Notify.create({
-  //         type: "negative",
-  //         position: "top",
-  //         message: "UnAuthorized User",
-  //       });
-  //     });
-
-  if (
-    admin.value.email === form.value.email &&
-    admin.value.password === form.value.password
-  ) {
-    {
-      //   userStore.setLoading(true);
-      const login = userStore.loginUser(admin.value);
-      login &&
-        Notify.create({
-          type: "positive",
-          position: "top",
-          message: "Login successful",
-        });
-
-      router.push("/dashboard");
-    }
-  } else {
-    Notify.create({
-      type: "negative",
-      position: "top",
-      message: "Invalid Credentials",
+  await HTTP.post(`api/submit-form`, formData, {
+    headers: { "content-type": "multipart/form-data" },
+  })
+    .then((res) => {
+      Notify.create({
+        type: "positive",
+        position: "top",
+        message: "Application Submitted",
+      });
+      form.value.userName = " ";
+      form.value.email = " ";
+      form.value.age = " ";
+      form.value.cnic = " ";
+      form.value.address = " ";
+      form.value.qualification = " ";
+      form.value.phoneNumber = " ";
+      form.value.cv = " ";
+    })
+    .catch((err) => {
+      Notify.create({
+        type: "negative",
+        position: "top",
+        message: "Error in submission",
+      });
     });
-  }
 };
 </script>
 

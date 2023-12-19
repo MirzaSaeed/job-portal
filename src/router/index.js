@@ -10,7 +10,7 @@ const routes = [
     component: LoginView,
     beforeEnter: (to, from, next) => {
       const userStore = useUserStore();
-      if (userStore.isAuth) {
+      if (userStore.isAuth && userStore.token !== null) {
         next("/dashboard");
       } else {
         next();
@@ -18,12 +18,12 @@ const routes = [
     },
   },
   {
-    path: "/set-password",
+    path: `/set-password/:token`,
     name: "password",
     component: () => import("../views/SetPasswordView.vue"),
     beforeEnter: (to, from, next) => {
       const userStore = useUserStore();
-      if (userStore.isAuth) {
+      if (userStore.isAuth && userStore.token !== null) {
         next("/dashboard");
       } else {
         next();
@@ -36,7 +36,7 @@ const routes = [
     component: () => import("../views/ForgetPasswordView.vue"),
     beforeEnter: (to, from, next) => {
       const userStore = useUserStore();
-      if (userStore.isAuth) {
+      if (userStore.isAuth && userStore.token !== null) {
         next("/dashboard");
       } else {
         next();
@@ -49,28 +49,24 @@ const routes = [
     component: () => import("../views/JobApplicationView.vue"),
     beforeEnter: (to, from, next) => {
       const userStore = useUserStore();
-      if (userStore.isAuth) {
+      if (userStore.isAuth && userStore.token !== null) {
         next("/dashboard");
       } else {
         next();
       }
     },
   },
-  {
-    path: "/register",
-    name: "register",
-    component: () => import("../views/RegisterView.vue"),
-  },
+
   {
     path: "/dashboard",
     name: "dashboard",
     component: () => import("../views/DashboardView.vue"),
     beforeEnter: (to, from, next) => {
       const userStore = useUserStore();
-      if (userStore.isAuth) {
+      if (userStore.isAuth && userStore.token !== null) {
         next();
       } else {
-        next("/login");
+        next("/");
       }
     },
     children: [
@@ -93,6 +89,11 @@ const routes = [
         path: "job-applications",
         name: "jobApplications",
         component: () => import("../components/JobApplicationList.vue"),
+      },
+      {
+        path: "profile",
+        name: "userProfile",
+        component: () => import("../components/UserProfile.vue"),
       },
     ],
   },

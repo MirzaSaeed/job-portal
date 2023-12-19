@@ -1,5 +1,5 @@
 <template>
-  <q-toolbar   class="nav-brand">
+  <q-toolbar class="nav-brand">
     <q-btn
       v-if="isAuth"
       flat
@@ -13,9 +13,7 @@
         >Sidebar</q-tooltip
       >
     </q-btn>
-    <div class="text-weight-bold text-subtitle1 text-no-wrap"
-      >Job Portal</div
-    >
+    <div class="text-weight-bold text-subtitle1 text-no-wrap">Job Portal</div>
     <q-space />
 
     <!--
@@ -34,7 +32,8 @@
         icon="person"
         color="white"
         text-color="black"
-        @click="toggleDialog"
+        @click="getUserProfile"
+        to="/dashboard/profile"
         toggleUser="true"
         class="nav-link"
       >
@@ -57,7 +56,6 @@
           Logout
         </q-tooltip></q-btn
       >
-      <DialogBox :userData="profile" />
     </q-tabs>
   </q-toolbar>
 </template>
@@ -68,11 +66,14 @@ import { ref } from "vue";
 import { useUserStore } from "../store/user-store";
 import { useComponentStore } from "../store/component-store";
 import DialogBox from "../components/DialogBox.vue";
+import { HTTP } from "@/helper/http-config";
+import { useRouter } from "vue-router";
 
+const router = useRouter();
 const componentStore = useComponentStore();
+const { isAuth, profile } = storeToRefs(useUserStore());
 
 const tab = ref("tab1");
-const { isAuth, profile } = storeToRefs(useUserStore());
 
 const handleLogout = () => {
   useUserStore().logoutUser();
@@ -83,6 +84,22 @@ const toggleDrawer = () => {
 };
 const toggleDialog = () => {
   componentStore.toggleDialog();
+};
+
+const getUserProfile = async () => {
+  useUserStore().setLoading(true);
+  await HTTP.get(`/api/me`)
+    .then((res) => {
+      useUserStore().getProfileData(res.data);
+      useUserStore().setLoading(false);
+    })
+    .catch((err) => {
+      useUserStore().setLoading(false);
+      if (err.response.status === 400) {
+        useUserStore().logoutUser();
+        router.push("/");
+      }
+    });
 };
 </script>
 

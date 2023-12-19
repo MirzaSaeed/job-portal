@@ -5,10 +5,10 @@
     style="height: 100vh"
     class="rounded-borders container"
   >
-    <q-header :elevated="isAuth ? '10': '0'">
+    <q-header>
       <Navbar />
     </q-header>
-    <Sidebar transition-show="jump-down" v-if="isAuth" />
+    <Sidebar transition-show="jump-down" v-if="isAuth && token !== null" />
     <q-page-container class="bg-gray-5">
       <router-view />
     </q-page-container>
@@ -21,7 +21,7 @@ import Navbar from "./components/Navbar.vue";
 import Sidebar from "./components/Sidebar.vue";
 import { useUserStore } from "./store/user-store";
 
-const { isAuth } = storeToRefs(useUserStore());
+const { isAuth, token } = storeToRefs(useUserStore());
 </script>
 <style>
 #app {
