@@ -156,16 +156,8 @@
 
 <script setup>
 import { ref } from "vue";
-import { Notify, useQuasar } from "quasar";
-import { storeToRefs } from "pinia";
-import { useUserStore } from "../store/user-store";
-import { useRouter } from "vue-router";
+import { Notify } from "quasar";
 import { HTTP } from "@/helper/http-config";
-
-const router = useRouter();
-
-const userStore = useUserStore();
-const { users, admin } = storeToRefs(useUserStore());
 
 const form = ref({
   userName: "",
@@ -186,18 +178,11 @@ const options = [
   "PhD",
 ];
 
-function checkFileType(files) {
-  return files.filter((file) => file.type === "image/png");
-}
-
-function onRejected(rejectedEntries) {
+function onRejected() {
   Notify.create({
     type: "negative",
     message: `file size is exceed. Max size = 4MB`,
   });
-}
-function checkFileSize(files) {
-  return files.filter((file) => file.size < 2048);
 }
 
 const onSubmit = async () => {
@@ -208,13 +193,13 @@ const onSubmit = async () => {
   formData.append("address", form.value.address);
   formData.append("qualification", form.value.qualification);
   formData.append("age", form.value.age);
-  formData.append("phoneNumber", form.value.phoneNumber);
+  formData.append("phoneNumber", `+92 3${form.value.phoneNumber}`);
   formData.append("cv", form.value.cv);
 
   await HTTP.post(`api/submit-form`, formData, {
     headers: { "content-type": "multipart/form-data" },
   })
-    .then((res) => {
+    .then(() => {
       Notify.create({
         type: "positive",
         position: "top",
@@ -229,7 +214,7 @@ const onSubmit = async () => {
       form.value.phoneNumber = " ";
       form.value.cv = " ";
     })
-    .catch((err) => {
+    .catch(() => {
       Notify.create({
         type: "negative",
         position: "top",

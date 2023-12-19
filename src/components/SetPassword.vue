@@ -73,14 +73,12 @@
 
 <script setup>
 import { ref } from "vue";
-import { Notify, useQuasar } from "quasar";
-import { storeToRefs } from "pinia";
+import { Notify } from "quasar";
 import { useUserStore } from "../store/user-store";
 import { useRoute, useRouter } from "vue-router";
 import { HTTP } from "@/helper/http-config";
 
 const userStore = useUserStore();
-const { users } = storeToRefs(useUserStore());
 
 const router = useRouter();
 const route = useRoute();
@@ -90,10 +88,10 @@ const form = ref({
   confirmPassword: "",
 });
 const rules = [
-  (val) =>
-    (val && val.length > 2) || "Password must contain at least 3 characters",
   // (val) =>
-  //   (val && val.length > 8) || "Password must contain at least 8 characters",
+  //   (val && val.length > 2) || "Password must contain at least 3 characters",
+  (val) =>
+    (val && val.length > 8) || "Password must contain at least 8 characters",
   (val) =>
     /[a-z]/.test(val) || "Password must contain at least one lowercase letter",
   (val) =>
@@ -112,7 +110,7 @@ const onSubmit = async () => {
     confirmPassword: form.value.confirmPassword,
     token: route.params.token,
   })
-    .then((res) => {
+    .then(() => {
       Notify.create({
         type: "positive",
         position: "top",
@@ -121,7 +119,7 @@ const onSubmit = async () => {
       userStore.setLoading(false);
       router.push("/");
     })
-    .catch((err) => {
+    .catch(() => {
       Notify.create({
         type: "negative",
         position: "top",

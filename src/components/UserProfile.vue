@@ -112,14 +112,13 @@ import { useComponentStore } from "@/store/component-store";
 import { useUserStore } from "@/store/user-store";
 import { storeToRefs } from "pinia";
 import { Notify } from "quasar";
-import { computed, onMounted, ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
 
 const componentStore = useComponentStore();
 const { profile } = storeToRefs(useUserStore());
-const { loading } = storeToRefs(useComponentStore());
 
 const isPwd = ref(true);
 const form = ref({
@@ -129,10 +128,10 @@ const form = ref({
 });
 
 const rules = [
-  (val) =>
-    (val && val.length > 2) || "Password must contain at least 3 characters",
   // (val) =>
-  //   (val && val.length > 8) || "Password must contain at least 8 characters",
+  //   (val && val.length > 2) || "Password must contain at least 3 characters",
+  (val) =>
+    (val && val.length > 8) || "Password must contain at least 8 characters",
   (val) =>
     /[a-z]/.test(val) || "Password must contain at least one lowercase letter",
   (val) =>
@@ -149,7 +148,7 @@ const onSubmit = async () => {
     newPassword: form.value.newPassword,
     confirmPassword: form.value.confirmPassword,
   })
-    .then((res) => {
+    .then(() => {
       Notify.create({
         message: "Password has been changed",
         type: "positive",
@@ -162,7 +161,7 @@ const onSubmit = async () => {
     .catch((err) => {
       componentStore.setLoading(false);
 
-      if (err.response.status === 400) {
+      if (err.response?.status === 400) {
         useUserStore().logoutUser();
         router.push("/");
       } else {

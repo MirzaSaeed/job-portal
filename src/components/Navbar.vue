@@ -16,14 +16,9 @@
     <div class="text-weight-bold text-subtitle1 text-no-wrap">Job Portal</div>
     <q-space />
 
-    <!--
-        notice shrink property since we are placing it
-        as child of QToolbar
-      -->
     <q-tabs v-if="!isAuth" v-model="tab" shrink>
       <q-route-tab to="/" name="tab1" label="Login" />
       <q-route-tab to="/job-application" name="tab2" label="Appy for job" />
-      <!-- <q-route-tab to="/register" name="tab2" label="Register" /> -->
     </q-tabs>
     <q-tabs v-else-if="isAuth" v-model="tab" shrink>
       <q-btn
@@ -65,13 +60,12 @@ import { storeToRefs } from "pinia";
 import { ref } from "vue";
 import { useUserStore } from "../store/user-store";
 import { useComponentStore } from "../store/component-store";
-import DialogBox from "../components/DialogBox.vue";
 import { HTTP } from "@/helper/http-config";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
 const componentStore = useComponentStore();
-const { isAuth, profile } = storeToRefs(useUserStore());
+const { isAuth } = storeToRefs(useUserStore());
 
 const tab = ref("tab1");
 
@@ -81,9 +75,6 @@ const handleLogout = () => {
 
 const toggleDrawer = () => {
   componentStore.toggleDrawer();
-};
-const toggleDialog = () => {
-  componentStore.toggleDialog();
 };
 
 const getUserProfile = async () => {
@@ -95,7 +86,7 @@ const getUserProfile = async () => {
     })
     .catch((err) => {
       useUserStore().setLoading(false);
-      if (err.response.status === 400) {
+      if (err.response?.status === 400) {
         useUserStore().logoutUser();
         router.push("/");
       }

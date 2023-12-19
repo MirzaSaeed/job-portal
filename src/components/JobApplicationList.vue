@@ -213,53 +213,55 @@
                 @click="handlePage(page + 1)"
               />
             </template>
-            <q-dialog v-model="dialogValue">
-              <q-card class="my-card">
-                <q-card-section class="row items-center q-pb-none">
-                  <div class="text-subtitle1">Applicant Profile</div>
-                  <q-space />
-                  <q-btn icon="close" flat round dense v-close-popup />
-                </q-card-section>
-                <q-item class="q-pb-lg">
-                  <q-item-section side>
-                    <q-avatar round size="48px">
-                      <img src="../assets/svg-icon/user-profile.svg" alt="" />
-                    </q-avatar>
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>
-                      Name:
-                      <span> {{ user?.userName }} </span>
-                    </q-item-label>
-                    <q-item-label>
-                      Email:
-                      <span> {{ user?.email }} </span>
-                    </q-item-label>
-                    <q-item-label>
-                      CNIC:
-                      <span> {{ user?.cnic }} </span>
-                    </q-item-label>
-                    <q-item-label>
-                      Phone Number:
-                      <span> {{ user?.phoneNumber }} </span>
-                    </q-item-label>
-                    <q-item-label>
-                      Age:
-                      <span> {{ user?.age }} </span>
-                    </q-item-label>
-                    <q-item-label>
-                      Qualification:
-                      <span> {{ user?.qualification }} </span>
-                    </q-item-label>
-                    <q-item-label>
-                      Address:
-                      <span> {{ user?.address }} </span>
-                    </q-item-label>
-                  </q-item-section>
-                </q-item>
-              </q-card>
-            </q-dialog>
           </q-table>
+          <q-dialog v-model="dialogValue">
+            <q-card id="my-card">
+              <q-card-section class="row items-center q-pb-none">
+                <div class="text-subtitle1">Applicant Profile</div>
+                <q-space />
+                <q-btn icon="close" flat round dense v-close-popup />
+              </q-card-section>
+              <q-item class="q-pb-lg">
+                <q-item-section side>
+                  <q-avatar round size="48px">
+                    <img src="../assets/svg-icon/user-profile.svg" alt="" />
+                  </q-avatar>
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>
+                    <span>Name: </span>
+                    <span class="text-bold"> {{ userInfo?.userName }} </span>
+                  </q-item-label>
+                  <q-item-label>
+                    Email:
+                    <span class="text-bold"> {{ userInfo?.email }} </span>
+                  </q-item-label>
+                  <q-item-label>
+                    CNIC:
+                    <span class="text-bold"> {{ userInfo?.cnic }} </span>
+                  </q-item-label>
+                  <q-item-label>
+                    Phone Number:
+                    <span class="text-bold"> {{ userInfo?.phoneNumber }} </span>
+                  </q-item-label>
+                  <q-item-label>
+                    Age:
+                    <span class="text-bold"> {{ userInfo?.age }} </span>
+                  </q-item-label>
+                  <q-item-label>
+                    Qualification:
+                    <span class="text-bold">
+                      {{ userInfo?.qualification }}
+                    </span>
+                  </q-item-label>
+                  <q-item-label>
+                    Address:
+                    <span class="text-bold"> {{ userInfo?.address }} </span>
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-card>
+          </q-dialog>
         </div>
       </q-item-section>
     </q-item>
@@ -272,9 +274,8 @@ import { useComponentStore } from "@/store/component-store";
 import { useUserStore } from "@/store/user-store";
 import { storeToRefs } from "pinia";
 import { Notify } from "quasar";
-import { computed, onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
-import DialogBox from "./DialogBox.vue";
 
 const router = useRouter();
 
@@ -284,6 +285,7 @@ const { loading } = storeToRefs(useComponentStore());
 
 const filter = ref("");
 const dropDownFilter = ref("");
+const dialogValue = ref(false);
 const applicationList = ref({});
 const userInfo = ref({});
 const page = ref(1);
@@ -345,10 +347,6 @@ const columns = [
   },
 ];
 
-const toggleDialog = () => {
-  componentStore.toggleDialog();
-};
-
 const handlePage = (pageNumber) => {
   page.value = pageNumber;
   handlePagination(page.value);
@@ -360,22 +358,25 @@ const setFilter = (status) => {
 
 const onRowClick = async (applicantId) => {
   componentStore.setLoading(true);
-  await HTTP.get(`api/applicatprofile/${applicantId}`)
+  await HTTP.get(`api/applicantProfile/${applicantId}`)
     .then((res) => {
       componentStore.setLoading(false);
       userInfo.value = res.data.data;
+      dialogValue.value = true;
     })
     .catch((err) => {
+      console.log(err);
       componentStore.setLoading(false);
-      if (err.response.status === 400) {
-        useUserStore().logoutUser();
+      if (err.response?.status === 400) {
+        userStore.logoutUser();
         router.push("/");
       } else {
         Notify.create({
-          message: "Users Applications Not Found",
+          message: "User Application Not Found",
           type: "negative",
           position: "top",
         });
+        router.push("/*");
       }
     })
     .finally(() => {
@@ -386,15 +387,15 @@ const onRowClick = async (applicantId) => {
 const handleAction = async (action, applicantId) => {
   componentStore.setLoading(true);
   await HTTP.patch(`api/update-applicants/${applicantId}`, { status: action })
-    .then((res) => {
+    .then(() => {
       handlePagination(page.value).then(() => {
         componentStore.setLoading(false);
       });
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response.status === 400) {
-        useUserStore().logoutUser();
+      if (err.response?.status === 400) {
+        userStore.logoutUser();
         router.push("/");
       } else {
         Notify.create({
@@ -434,8 +435,8 @@ const downloadCV = async (applicantId, userName) => {
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response.status === 400) {
-        useUserStore().logoutUser();
+      if (err.response?.status === 400) {
+        userStore.logoutUser();
         router.push("/");
       } else {
         Notify.create({
@@ -457,14 +458,14 @@ const handlePagination = async (pageNumber) => {
 
       applicationList.value = res.data;
       page.value = res.data.pagination.page;
-      pagination.page = res.data.pagination.page;
-      pagination.rowsPerPage = res.data.pagination.page;
-      pagination.totalItems = res.data.pagination.totalUsers;
+      pagination.value.page = res.data.pagination.page;
+      pagination.value.rowsPerPage = res.data.pagination.page;
+      pagination.value.totalItems = res.data.pagination.totalUsers;
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response.status === 400) {
-        useUserStore().logoutUser();
+      if (err.response?.status === 400) {
+        userStore.logoutUser();
         router.push("/");
       } else {
         Notify.create({
@@ -472,6 +473,7 @@ const handlePagination = async (pageNumber) => {
           type: "negative",
           position: "top",
         });
+        router.push("/*");
       }
     })
     .finally(() => {
@@ -486,14 +488,14 @@ watch(async () => {
       componentStore.setLoading(false);
       applicationList.value = res.data;
       page.value = res.data.pagination.page;
-      pagination.page = res.data.pagination.page;
-      pagination.rowsPerPage = res.data.pagination.page;
-      pagination.totalItems = res.data.pagination.totalUsers;
+      pagination.value.page = res.data.pagination.page;
+      pagination.value.rowsPerPage = res.data.pagination.page;
+      pagination.value.totalItems = res.data.pagination.totalUsers;
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response.status === 400) {
-        useUserStore().logoutUser();
+      if (err.response?.status === 400) {
+        userStore.logoutUser();
         router.push("/");
       } else {
         Notify.create({
@@ -501,6 +503,7 @@ watch(async () => {
           type: "negative",
           position: "top",
         });
+        router.push("/*");
       }
     })
     .finally(() => {
@@ -514,14 +517,14 @@ watch(async () => {
       componentStore.setLoading(false);
       applicationList.value = res.data;
       page.value = res.data.pagination.page;
-      pagination.page = res.data.pagination.page;
-      pagination.rowsPerPage = res.data.pagination.page;
-      pagination.totalItems = res.data.pagination.totalUsers;
+      pagination.value.page = res.data.pagination.page;
+      pagination.value.rowsPerPage = res.data.pagination.page;
+      pagination.value.totalItems = res.data.pagination.totalUsers;
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response.status === 400) {
-        useUserStore().logoutUser();
+      if (err.response?.status === 400) {
+        userStore.logoutUser();
         router.push("/");
       } else {
         Notify.create({
@@ -529,6 +532,7 @@ watch(async () => {
           type: "negative",
           position: "top",
         });
+        router.push("/*");
       }
     })
     .finally(() => {
@@ -557,5 +561,10 @@ onMounted(async () => {
   background: red;
   color: white !important;
   transition: all ease-in-out 0.2s;
+}
+
+#my-card {
+  width: 100%;
+  max-width: 450px;
 }
 </style>

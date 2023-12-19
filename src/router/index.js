@@ -84,6 +84,18 @@ const routes = [
         path: "activity-logs",
         name: "activtiyLog",
         component: () => import("../components/ActivityLog.vue"),
+        beforeEnter: (to, from, next) => {
+          const userStore = useUserStore();
+          if (
+            userStore.isAuth &&
+            userStore.token !== null &&
+            userStore.isAdmin
+          ) {
+            next();
+          } else {
+            next("/");
+          }
+        },
       },
       {
         path: "job-applications",
@@ -94,6 +106,11 @@ const routes = [
         path: "profile",
         name: "userProfile",
         component: () => import("../components/UserProfile.vue"),
+      },
+      {
+        path: "/*",
+        name: "notfound",
+        component: () => import("../components/NotFoundException.vue"),
       },
     ],
   },

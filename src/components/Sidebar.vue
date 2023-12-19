@@ -113,7 +113,7 @@ const toggleDrawer = () => {
 }
 
 a.router-link-exact-active .sidebar-item {
-   color: #a5d6a7 !important;
+   color: green !important;
   scale: 1.1;
 
 }

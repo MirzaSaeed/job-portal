@@ -76,14 +76,11 @@
 
 <script setup>
 import { onBeforeMount, onMounted } from "vue";
-import Sidebar from "../components/Sidebar.vue";
 import { useUserStore } from "../store/user-store";
-import Dashboard from "../components/Dashboard.vue";
 import { storeToRefs } from "pinia";
-import { HTTP } from "@/helper/http-config";
 
 const userStore = useUserStore();
-const { loading, setHeader } = storeToRefs(useUserStore());
+const { loading } = storeToRefs(useUserStore());
 
 onMounted(async () => {
   userStore.setLoading(true);

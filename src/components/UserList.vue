@@ -235,7 +235,7 @@ import { useComponentStore } from "@/store/component-store";
 import { useUserStore } from "@/store/user-store";
 import { storeToRefs } from "pinia";
 import { Notify } from "quasar";
-import { computed, onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import DialogBox from "./DialogBox.vue";
 
@@ -249,7 +249,6 @@ const { loading } = storeToRefs(useComponentStore());
 const filter = ref("");
 const dropDownFilter = ref("");
 const users = ref({});
-const userInfo = ref({});
 const dialogValue = ref(false);
 const page = ref(1);
 const pagination = ref({
@@ -299,8 +298,6 @@ const columns = [
     field: "action",
   },
 ];
-
-let totalUsers;
 let totalVerifiedUsers;
 let totalNotVerifiedUsers;
 
@@ -329,11 +326,10 @@ const handlePagination = async (pageNumber) => {
       componentStore.setLoading(false);
       users.value = res.data;
       page.value = res.data.pagination.page;
-      pagination.page = res.data.pagination.page;
-      pagination.rowsPerPage = res.data.pagination.page;
-      pagination.totalItems = res.data.pagination.totalUsers;
+      pagination.value.page = res.data.pagination.page;
+      pagination.value.rowsPerPage = res.data.pagination.page;
+      pagination.value.totalItems = res.data.pagination.totalUsers;
 
-      totalUsers = res.data.pagination.totalUsers;
       totalVerifiedUsers = users.value?.data?.filter(
         (user) => user.isVerified && user
       ).length;
@@ -345,7 +341,7 @@ const handlePagination = async (pageNumber) => {
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response.status === 400) {
+      if (err.response?.status === 400) {
         useUserStore().logoutUser();
         router.push("/");
       } else {
@@ -372,7 +368,7 @@ const onRowClick = async (id) => {
 
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response.status === 400) {
+      if (err.response?.status === 400) {
         useUserStore().logoutUser();
         router.push("/");
       } else {
@@ -381,6 +377,7 @@ const onRowClick = async (id) => {
           type: "negative",
           position: "top",
         });
+        router.push("/*");
       }
     })
     .finally(() => {
@@ -391,7 +388,7 @@ const onRowClick = async (id) => {
 const handleVerification = async (userId, userEmail) => {
   componentStore.setLoading(true);
   await HTTP.patch(`api/verifyuser/${userId}`)
-    .then((res) => {
+    .then(() => {
       componentStore.setLoading(false);
       Notify.create({
         message: `Email have been send for verified on ${userEmail}`,
@@ -401,7 +398,7 @@ const handleVerification = async (userId, userEmail) => {
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response.status === 400) {
+      if (err.response?.status === 400) {
         useUserStore().logoutUser();
         router.push("/");
       } else {
@@ -410,6 +407,7 @@ const handleVerification = async (userId, userEmail) => {
           type: "negative",
           position: "top",
         });
+        router.push("/*");
       }
     })
     .finally(() => {
@@ -424,13 +422,13 @@ watch(async () => {
       componentStore.setLoading(false);
       users.value = res.data;
       page.value = res.data.pagination.page;
-      pagination.page = res.data.pagination.page;
-      pagination.rowsPerPage = res.data.pagination.page;
-      pagination.totalItems = res.data.pagination.totalUsers;
+      pagination.value.page = res.data.pagination.page;
+      pagination.value.rowsPerPage = res.data.pagination.page;
+      pagination.value.totalItems = res.data.pagination.totalUsers;
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response.status === 400) {
+      if (err.response?.status === 400) {
         useUserStore().logoutUser();
         router.push("/");
       } else {
@@ -439,6 +437,7 @@ watch(async () => {
           type: "negative",
           position: "top",
         });
+        router.push("/*");
       }
     })
     .finally(() => {
@@ -452,13 +451,13 @@ watch(async () => {
       componentStore.setLoading(false);
       users.value = res.data;
       page.value = res.data.pagination.page;
-      pagination.page = res.data.pagination.page;
-      pagination.rowsPerPage = res.data.pagination.page;
-      pagination.totalItems = res.data.pagination.totalUsers;
+      pagination.value.page = res.data.pagination.page;
+      pagination.value.rowsPerPage = res.data.pagination.page;
+      pagination.value.totalItems = res.data.pagination.totalUsers;
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response.status === 400) {
+      if (err.response?.status === 400) {
         useUserStore().logoutUser();
         router.push("/");
       } else {
@@ -467,6 +466,7 @@ watch(async () => {
           type: "negative",
           position: "top",
         });
+        router.push("/*");
       }
     })
     .finally(() => {

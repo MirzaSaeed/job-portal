@@ -56,16 +56,12 @@
 
 <script setup>
 import { ref } from "vue";
-import { Notify, useQuasar } from "quasar";
-import { storeToRefs } from "pinia";
+import { Notify } from "quasar";
 import { useUserStore } from "../store/user-store";
-import { useRouter } from "vue-router";
 import { HTTP } from "@/helper/http-config";
 
-const router = useRouter();
 
 const userStore = useUserStore();
-const { users, admin } = storeToRefs(useUserStore());
 
 const form = ref({
   email: "",
@@ -77,7 +73,7 @@ const onSubmit = async () => {
   await HTTP.post(`api/forgetpassword`, {
     email: form.value.email,
   })
-    .then((res) => {
+    .then(() => {
       form.value.email = " ";
       userStore.setLoading(false);
 
@@ -87,7 +83,7 @@ const onSubmit = async () => {
         message: "Check your email account",
       });
     })
-    .catch((err) => {
+    .catch(() => {
       userStore.setLoading(false);
 
       Notify.create({

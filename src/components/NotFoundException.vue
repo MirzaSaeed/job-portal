@@ -2,7 +2,7 @@
   <q-card class="my-card shadow-0">
     <q-item>
       <q-item-section class="justify-center content-center align-center">
-        <img src="../assets/svg-icon/dashboard-svg.svg" class="img" alt="" />
+        <img src="../assets/svg-icon/404.svg" class="img" alt="" />
       </q-item-section>
     </q-item>
   </q-card>

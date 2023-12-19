@@ -1,6 +1,5 @@
 import { HTTP } from "@/helper/http-config";
 import { defineStore } from "pinia";
-import { parseQuery } from "vue-router";
 
 export const useUserStore = defineStore("user", {
   state: () => {

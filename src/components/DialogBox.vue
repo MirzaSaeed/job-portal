@@ -63,7 +63,6 @@ import { Notify } from "quasar";
 import { useUserStore } from "@/store/user-store";
 import { useRouter } from "vue-router";
 
-defineProps(["userData", "formData", "toggleUser"]);
 
 const router = useRouter();
 
@@ -82,7 +81,7 @@ const onSubmit = async () => {
     firstName: form.value.firstName,
     lastName: form.value.lastName,
   })
-    .then((res) => {
+    .then(() => {
       userStore.setLoading(true);
       Notify.create({
         type: "positive",
@@ -93,7 +92,7 @@ const onSubmit = async () => {
       userStore.setLoading(false);
     })
     .catch((err) => {
-      if (err.response.status === 400) {
+      if (err.response?.status === 400) {
         useUserStore().logoutUser();
         router.push("/");
       } else {

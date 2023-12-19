@@ -76,14 +76,13 @@
 
 <script setup>
 import { ref } from "vue";
-import { Notify, useQuasar } from "quasar";
+import { Notify } from "quasar";
 import { storeToRefs } from "pinia";
 import { useUserStore } from "../store/user-store";
 import { useRouter } from "vue-router";
 import { HTTP } from "@/helper/http-config";
 
 const userStore = useUserStore();
-const { users, admin } = storeToRefs(useUserStore());
 
 const router = useRouter();
 
@@ -102,7 +101,7 @@ const onSubmit = async () => {
     password: form.value.password,
   })
     .then((res) => {
-      const login = userStore.loginUser(res.data.data);
+      userStore.loginUser(res.data.data);
       userStore.setToken(res.data.data.token);
       Notify.create({
         type: "positive",
@@ -111,7 +110,7 @@ const onSubmit = async () => {
       });
       router.push("/dashboard");
     })
-    .catch((err) => {
+    .catch(() => {
       userStore.setLoading(false);
       Notify.create({
         type: "negative",

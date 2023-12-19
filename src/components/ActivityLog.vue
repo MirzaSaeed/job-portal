@@ -87,7 +87,7 @@ import { useComponentStore } from "@/store/component-store";
 import { useUserStore } from "@/store/user-store";
 import { storeToRefs } from "pinia";
 import { Notify } from "quasar";
-import { computed, onMounted, ref } from "vue";
+import {  onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -95,7 +95,6 @@ const router = useRouter();
 const componentStore = useComponentStore();
 const userStore = useUserStore();
 
-const dropDownFilter = ref("");
 const activityList = ref([]);
 const page = ref(1);
 const pagination = ref({
@@ -142,9 +141,6 @@ const columns = [
 
 const { loading } = storeToRefs(useComponentStore());
 
-const toggleDialog = () => {
-  componentStore.toggleDialog();
-};
 
 const formatTime = (timestamp) => {
   const date = new Date(timestamp);
@@ -171,14 +167,14 @@ const handlePagination = async (pageNumber) => {
       componentStore.setLoading(false);
       activityList.value = res.data;
       page.value = res.data.pagination.page;
-      pagination.page = res.data.pagination.page;
-      pagination.rowsPerPage = res.data.pagination.page;
-      pagination.totalItems = res.data.pagination.totalUsers;
+      pagination.value.page = res.data.pagination.page;
+      pagination.value.rowsPerPage = res.data.pagination.page;
+      pagination.value.totalItems = res.data.pagination.totalUsers;
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response.status === 400) {
-        useUserStore().logoutUser();
+      if (err.response?.status === 400) {
+        userStore.logoutUser();
         router.push("/");
       } else {
         Notify.create({
