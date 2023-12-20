@@ -2,7 +2,7 @@
   <q-card class="my-card shadow-0">
     <q-item>
       <q-item-section class="">
-        <q-breadcrumbs class="q-pb-sm">
+        <q-breadcrumbs class="q-pb-sm text-subtitle1">
           <q-breadcrumbs-el
             style="color: green"
             label="Dashboard"
@@ -13,15 +13,15 @@
         <q-separator />
         <div class="q-pa-md">
           <div class="q-px-md">
-            <p>
+            <p class="text-subtitle1">
               Total Users:
-              <span class="text-bold">{{ users?.pagination?.totalUsers }}</span>
+              <span class="text-bold">{{ users?.count }}</span>
             </p>
-            <p>
+            <p class="text-subtitle1">
               Total Verified Users:
               <span class="text-bold">{{ totalVerifiedUsers }}</span>
             </p>
-            <p>
+            <p class="text-subtitle1">
               Total Not Verified Users:
               <span class="text-bold">{{ totalNotVerifiedUsers }}</span>
             </p>
@@ -33,7 +33,7 @@
             bordered
             title="Users"
             row-key="index"
-            :rows="users?.data"
+            :rows="users?.rows"
             :columns="columns"
             virtual-scroll
             :pagination="pagination"
@@ -43,64 +43,41 @@
 
             <template v-slot:top-left>
               <q-btn
-                flat
                 color="green"
+                outline
                 @click="handleCreateForm"
                 type="submit"
                 rounded
+                class="text-body1 text-capitalize"
                 label="Create User"
               />
             </template>
             <template v-slot:top-right>
-              <q-btn-dropdown flat color="green" class="q-mx-sm" label="Status">
-                <q-list>
-                  <q-item
-                    clickable
-                    v-close-popup
-                    v-model="dropDownFilter"
-                    @click="setFilter('')"
-                  >
-                    <q-item-section>
-                      <q-item-label>All</q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <q-item
-                    clickable
-                    v-close-popup
-                    v-model="dropDownFilter"
-                    @click="setFilter(true)"
-                  >
-                    <q-item-section>
-                      <q-item-label style="color: #53af50"
-                        >Verified</q-item-label
-                      >
-                    </q-item-section>
-                  </q-item>
-
-                  <q-item
-                    clickable
-                    v-close-popup
-                    v-model="dropDownFilter"
-                    @click="setFilter(false)"
-                  >
-                    <q-item-section>
-                      <q-item-label style="color: red"
-                        >Not Verified</q-item-label
-                      >
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </q-btn-dropdown>
+              <div style="width: 180px">
+                <q-select
+                  dense
+                  class="q-mr-md"
+                  color="green"
+                  outlined
+                  v-model="dropDownFilter"
+                  :options="options"
+                  label="Status"
+                  @input="setFilter"
+                />
+              </div>
 
               <q-input
                 borderless
                 dense
+                outlined
                 debounce="300"
+                color="green"
+                class="text-subtitle1"
                 v-model="filter"
                 placeholder="Search"
               >
                 <template v-slot:append>
-                  <q-icon name="search" />
+                  <q-icon name="search" color="green-4" />
                 </template>
               </q-input>
             </template>
@@ -109,14 +86,12 @@
             <template v-slot:body="props">
               <q-tr :props="props">
                 <q-td key="index" :props="props">
-                  {{ users?.data?.indexOf(props.row) + 1 }}
+                  {{ users?.rows?.indexOf(props.row) + 1 }}
                 </q-td>
-                <q-td key="firstName" :props="props">
-                  {{ props.row.firstName }}
+                <q-td key="name" :props="props">
+                  {{ props.row.firstName }} {{ props.row.lastName }}
                 </q-td>
-                <q-td key="lastName" :props="props">
-                  {{ props.row.lastName }}
-                </q-td>
+
                 <q-td key="email" :props="props">
                   {{ props.row.email }}
                 </q-td>
@@ -141,6 +116,7 @@
                     v-if="!props.row.isVerified"
                     icon="send"
                     size="sm"
+                    :disable="loading"
                     @click="
                       handleVerification(props.row.userId, props.row.email)
                     "
@@ -157,6 +133,7 @@
                     flat
                     round
                     icon="visibility"
+                    :disable="loading"
                     color="white"
                     text-color="black"
                     @click="onRowClick(props.row.userId)"
@@ -181,7 +158,9 @@
                 dense
                 flat
                 :disable="
-                  users?.pagination?.hasPrevPage === false ? true : false
+                  users?.pagination?.hasPrevPage === false
+                    ? true
+                    : false || loading
                 "
                 @click="handlePage(page - 1)"
               />
@@ -193,7 +172,9 @@
                 dense
                 flat
                 :disable="
-                  users?.pagination?.hasNextPage === false ? true : false
+                  users?.pagination?.hasNextPage === false
+                    ? true
+                    : false || loading
                 "
                 @click="handlePage(page + 1)"
               />
@@ -201,23 +182,30 @@
           </q-table>
 
           <q-dialog v-model="dialogValue">
-            <q-card class="my-card">
-              <q-card-section class="row items-center q-pb-none">
-                <div class="text-subtitle1">User Profile</div>
+            <q-card
+              class="my-card q-pb-md"
+              style="width: 100%; max-width: 550px"
+            >
+              <q-card-section class="row items-center q-pb-sm">
+                <div class="text-h6 text-bold">User Profile</div>
                 <q-space />
                 <q-btn icon="close" flat round dense v-close-popup />
               </q-card-section>
-              <q-item class="q-pb-lg">
+              <q-separator />
+
+              <q-item class="q-pb-lg q-mt-md q-ml-md">
                 <q-item-section side>
                   <q-avatar round size="48px">
                     <img src="../assets/svg-icon/user-profile.svg" alt="" />
                   </q-avatar>
                 </q-item-section>
                 <q-item-section>
-                  <q-item-label>
+                  <q-item-label class="text-h6">
                     {{ user?.firstName }} {{ user?.lastName }}</q-item-label
                   >
-                  <q-item-label caption>{{ user?.email }}</q-item-label>
+                  <q-item-label class="text-subtitle1">{{
+                    user?.email
+                  }}</q-item-label>
                 </q-item-section>
               </q-item>
             </q-card>
@@ -246,6 +234,21 @@ const userStore = useUserStore();
 const { user } = storeToRefs(useUserStore());
 const { loading } = storeToRefs(useComponentStore());
 
+const options = [
+  {
+    label: "All",
+    value: "",
+  },
+  {
+    label: "Verified",
+    value: "true",
+  },
+  {
+    label: "Not Verified",
+    value: "false",
+  },
+];
+
 const filter = ref("");
 const dropDownFilter = ref("");
 const users = ref({});
@@ -266,19 +269,13 @@ const columns = [
     field: "index",
   },
   {
-    name: "firstName",
+    name: "name",
     align: "center",
-    label: "First Name",
-    field: "firstName",
+    label: "Name",
+    field: "name",
     sortable: true,
   },
-  {
-    name: "lastName",
-    align: "center",
-    label: "Last Name",
-    field: "lastName",
-    sortable: true,
-  },
+
   {
     name: "email",
     align: "left",
@@ -320,24 +317,17 @@ const handlePage = (pageNumber) => {
 const handlePagination = async (pageNumber) => {
   componentStore.setLoading(true);
   await HTTP.get(
-    `api/getUser?page=${pageNumber}&search=${filter.value}&isVerified=${dropDownFilter.value}`
+    `api/user/get-user?page=${pageNumber}&search=${filter.value}&isVerified=${dropDownFilter.value}`
   )
     .then((res) => {
       componentStore.setLoading(false);
-      users.value = res.data;
-      page.value = res.data.pagination.page;
-      pagination.value.page = res.data.pagination.page;
-      pagination.value.rowsPerPage = res.data.pagination.page;
-      pagination.value.totalItems = res.data.pagination.totalUsers;
+      users.value = res.data?.data;
+      page.value = res.data?.data?.pagination.page;
+      pagination.value.page = res.data?.data?.pagination.page;
+      pagination.value.totalItems = res.data?.data?.pagination.totalUsers;
 
-      totalVerifiedUsers = users.value?.data?.filter(
-        (user) => user.isVerified && user
-      ).length;
-      totalNotVerifiedUsers = users.value?.data?.filter((user) => {
-        if (!user.isVerified) {
-          return users;
-        }
-      }).length;
+      totalVerifiedUsers = res.data?.data?.pagination.countVerifiedUsers;
+      totalNotVerifiedUsers = res.data?.data?.pagination.countUnverifiedUsers;
     })
     .catch((err) => {
       componentStore.setLoading(false);
@@ -359,7 +349,7 @@ const handlePagination = async (pageNumber) => {
 
 const onRowClick = async (id) => {
   componentStore.setLoading(true);
-  await HTTP.get(`api/userprofile/${id}`)
+  await HTTP.get(`api/user/user-profile/${id}`)
     .then((res) => {
       componentStore.setLoading(false);
       userStore.getUser(res.data);
@@ -377,7 +367,6 @@ const onRowClick = async (id) => {
           type: "negative",
           position: "top",
         });
-        router.push("/*");
       }
     })
     .finally(() => {
@@ -387,7 +376,7 @@ const onRowClick = async (id) => {
 
 const handleVerification = async (userId, userEmail) => {
   componentStore.setLoading(true);
-  await HTTP.patch(`api/verifyuser/${userId}`)
+  await HTTP.patch(`api/auth/verify-user/${userId}`)
     .then(() => {
       componentStore.setLoading(false);
       Notify.create({
@@ -407,7 +396,6 @@ const handleVerification = async (userId, userEmail) => {
           type: "negative",
           position: "top",
         });
-        router.push("/*");
       }
     })
     .finally(() => {
@@ -417,14 +405,13 @@ const handleVerification = async (userId, userEmail) => {
 
 watchEffect(async () => {
   componentStore.setLoading(true);
-  await HTTP.get(`api/getUser?search=${filter.value}`)
+  await HTTP.get(`api/user/get-user?search=${filter.value}`)
     .then((res) => {
       componentStore.setLoading(false);
-      users.value = res.data;
-      page.value = res.data.pagination.page;
-      pagination.value.page = res.data.pagination.page;
-      pagination.value.rowsPerPage = res.data.pagination.page;
-      pagination.value.totalItems = res.data.pagination.totalUsers;
+      users.value = res.data?.data;
+      page.value = res.data?.data?.pagination.page;
+      pagination.value.page = res.data?.data?.pagination.page;
+      pagination.value.totalItems = res.data?.data?.pagination.totalUsers;
     })
     .catch((err) => {
       componentStore.setLoading(false);
@@ -437,7 +424,6 @@ watchEffect(async () => {
           type: "negative",
           position: "top",
         });
-        router.push("/*");
       }
     })
     .finally(() => {
@@ -446,14 +432,14 @@ watchEffect(async () => {
 });
 watchEffect(async () => {
   componentStore.setLoading(true);
-  await HTTP.get(`api/getUser?isVerified=${dropDownFilter.value}`)
+
+  await HTTP.get(`api/user/get-user?isVerified=${dropDownFilter.value?.value}`)
     .then((res) => {
       componentStore.setLoading(false);
-      users.value = res.data;
-      page.value = res.data.pagination.page;
-      pagination.value.page = res.data.pagination.page;
-      pagination.value.rowsPerPage = res.data.pagination.page;
-      pagination.value.totalItems = res.data.pagination.totalUsers;
+      users.value = res.data?.data;
+      page.value = res.data?.data?.pagination.page;
+      pagination.value.page = res.data?.data?.pagination.page;
+      pagination.value.totalItems = res.data?.data?.pagination.totalUsers;
     })
     .catch((err) => {
       componentStore.setLoading(false);
@@ -466,7 +452,6 @@ watchEffect(async () => {
           type: "negative",
           position: "top",
         });
-        router.push("/*");
       }
     })
     .finally(() => {

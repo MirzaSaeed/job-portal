@@ -24,47 +24,95 @@
         transition-hide="scale"
         fit
       >
-        <q-list style="min-width: 200px">
-          <q-item clickable>
-            <q-item-section>
-              <div class="q-pa-md row justify-center">
-                <div style="width: 100%; max-width: 800px">
-                  <q-chat-message
-                    name="me"
-                    size="sm"
-                    avatar="https://cdn.quasar.dev/img/avatar1.jpg"
-                    :text="['hey, how are you?']"
-                    stamp="7 minutes ago"
-                    sent
-                    text-color="white"
-                    bg-color="green-7"
-                  />
-                  <q-chat-message
-                    name="Jane"
-                    avatar="https://cdn.quasar.dev/img/avatar5.jpg"
-                    size="sm"
-                    :text="['doing fine, how r you?']"
-                    stamp="4 minutes ago"
-                    text-color="white"
-                    bg-color="green-4"
-                  />
-                </div>
-              </div>
+        <q-list style="min-width: 300px">
+          <q-item>
+            <q-item-section class="text-subtitle1 text-bold">
+              Customer Support
             </q-item-section>
+          </q-item>
+          <q-separator />
+          <q-item style="height: 30vh" class="d-flex column justify-end">
+            <div class="q-pa-md row justify-center" style="overflow: auto">
+              <div style="width: 100%; max-width: 300px">
+                <q-chat-message
+                  name="me"
+                  size="sm"
+                  avatar="https://cdn.quasar.dev/img/avatar1.jpg"
+                  :text="['hey, how are you? ']"
+                  stamp="7 minutes ago"
+                  sent
+                  text-color="white"
+                  bg-color="green-7"
+                /><q-chat-message
+                  name="me"
+                  size="sm"
+                  avatar="https://cdn.quasar.dev/img/avatar1.jpg"
+                  :text="['hey, how are you?']"
+                  stamp="7 minutes ago"
+                  sent
+                  text-color="white"
+                  bg-color="green-7"
+                /><q-chat-message
+                  name="me"
+                  size="sm"
+                  avatar="https://cdn.quasar.dev/img/avatar1.jpg"
+                  :text="['hey, how are you?']"
+                  stamp="7 minutes ago"
+                  sent
+                  text-color="white"
+                  bg-color="green-7"
+                /><q-chat-message
+                  name="me"
+                  size="sm"
+                  avatar="https://cdn.quasar.dev/img/avatar1.jpg"
+                  :text="['hey, how are you?']"
+                  stamp="7 minutes ago"
+                  sent
+                  text-color="white"
+                  bg-color="green-7"
+                /><q-chat-message
+                  name="me"
+                  size="sm"
+                  avatar="https://cdn.quasar.dev/img/avatar1.jpg"
+                  :text="['hey, how are you?']"
+                  stamp="7 minutes ago"
+                  sent
+                  text-color="white"
+                  bg-color="green-7"
+                />
+                <q-chat-message
+                  name="Jane"
+                  avatar="https://cdn.quasar.dev/img/avatar5.jpg"
+                  size="sm"
+                  :text="['doing fine, how r you?']"
+                  stamp="4 minutes ago"
+                  text-color="white"
+                  bg-color="green-4"
+                />
+              </div>
+            </div>
           </q-item>
           <q-separator />
           <q-item>
             <q-item-section>
               <q-input
-                standout
+                outlined
                 rounded
                 dense
+                label-color="green"
                 color="green"
                 v-model="message"
                 label="Type message"
               >
                 <template v-slot:append>
-                  <q-icon name="send" @click.prevent="send" color="green-4" />
+                  <q-icon
+                    name="send"
+                    class="cursor-pointer"
+                    type="submit"
+                    @click="send"
+                    size="13"
+                    color="green-4"
+                  />
                 </template> </q-input
             ></q-item-section>
           </q-item>
@@ -85,7 +133,7 @@ import {
 } from "vue";
 import { useUserStore } from "../store/user-store";
 import { storeToRefs } from "pinia";
-import { io } from "socket.io-client";
+// import { io } from "socket.io-client";
 import { HTTP } from "@/helper/http-config";
 import { useRouter } from "vue-router";
 
@@ -93,20 +141,43 @@ const router = useRouter();
 
 const userStore = useUserStore();
 const { loading, profile } = storeToRefs(useUserStore());
-// const socket = io(process.env.VUE_APP_BASE_URL);
-let newMessage = ref(null);
+// const socket = io(process.env.VUE_APP_BASE_URL, {
+//   withCredentials: true,
+// });
+let message = ref("");
 let typing = ref(false);
 let ready = ref(false);
 let info = reactive([]);
 let connections = ref(0);
-const messages = reactive([]);
+const messages = ref([]);
 const userName = ref(null);
 
+// Socket event handlers
+const onConnect = () => {
+  console.log("Connected to server");
+};
+
+const onDisconnect = () => {
+  console.log("Disconnected from server");
+};
+
+const onChatMessage = (msg) => {
+  messages.value.push(msg);
+};
+
+const sendMessage = () => {
+  if (message.value.trim() !== "") {
+    // Assuming that $socket is available globally, you may need to adjust this
+    this.$socket.emit("chat message", message.value);
+    message.value = "";
+  }
+};
 // watch(newMessage, (newMessage, preNewMessage) => {
 //   newMessage ? socket.emit("typing", profile?.name) : socket.emit("stopTyping");
 // });
 
 // const send = () => {
+//   console.log(newMessage.value);
 //   messages.push({
 //     message: newMessage.value,
 //     type: 0,
@@ -117,12 +188,12 @@ const userName = ref(null);
 //     message: newMessage.value,
 //     user: profile?.name,
 //   });
-//   newMessage.value = "";
+//   newMessage.value = " ";
 // };
 
 onMounted(async () => {
   userStore.setLoading(true);
-  await HTTP.get(`/api/me`)
+  await HTTP.get(`api/user/me`)
     .then((res) => {
       useUserStore().getProfileData(res.data);
       useUserStore().setLoading(false);

@@ -1,9 +1,9 @@
 <template>
-  <q-drawer
+  <q-drawer 
     v-model="drawer"
     show-if-above
-    :width="250"
-    :breakpoint="500"
+    :width="300"
+    :breakpoint="992"
     bordered
     class="bg-grey-11"
   >
@@ -83,7 +83,7 @@ const toggleDrawer = () => {
 
 <style scoped>
 .sidebar-list:hover {
-  background: #a5d6a7;
+  background: #7ada7d;
   color: white !important;
   transition: all ease-in-out 0.2s;
 }

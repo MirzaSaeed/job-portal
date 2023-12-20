@@ -36,19 +36,11 @@ export const useUserStore = defineStore("user", {
       this.loading = bool;
     },
     loginUser(payload) {
-      // this.auth = {
-      //   id: payload.id,
-      //   email: payload.email,
-      //   session: new Date(),
-      // };
       this.isAuth = true;
-      this.isAdmin = payload.user.isAdmin;
+      this.isAdmin = payload.isAdmin;
       return true;
     },
-    userList(payload) {
-      this.users.push(payload);
-      return true;
-    },
+    async userList() {},
     getUser(payload) {
       this.user = payload.data;
     },

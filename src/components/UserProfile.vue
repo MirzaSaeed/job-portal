@@ -143,7 +143,7 @@ const rules = [
 ];
 
 const onSubmit = async () => {
-  await HTTP.patch(`api/changepassword`, {
+  await HTTP.patch(`api/auth/change-password`, {
     oldPassword: form.value.oldPassword,
     newPassword: form.value.newPassword,
     confirmPassword: form.value.confirmPassword,

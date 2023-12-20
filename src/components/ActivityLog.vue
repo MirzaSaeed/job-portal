@@ -2,7 +2,7 @@
   <q-card class="my-card shadow-0">
     <q-item>
       <q-item-section class="">
-        <q-breadcrumbs class="q-pb-sm">
+        <q-breadcrumbs class="q-pb-sm text-subtitle1">
           <q-breadcrumbs-el
             style="color: green"
             label="Dashboard"
@@ -27,7 +27,7 @@
             <template v-slot:body="props">
               <q-tr :props="props">
                 <q-td key="index" :props="props">
-                  {{ activityList?.data.indexOf(props.row) + 1 }}
+                  {{ props.row.logNumber }}
                 </q-td>
                 <q-td key="name" :props="props">
                   {{ props.row.name ? props.row.name : "User" }}
@@ -41,7 +41,7 @@
                   {{
                     `${
                       props.row.name ? props.row.name : "User"
-                    } have perform an activity on ${props.row.url}`
+                    } have perform an activity on ${props.row.activity}`
                   }}
                 </q-td>
                 <q-td key="time" :props="props">
@@ -162,7 +162,7 @@ const handlePage = (pageNumber) => {
 const handlePagination = async (pageNumber) => {
   componentStore.setLoading(true);
 
-  await HTTP.get(`api/getlogs?page=${pageNumber}`)
+  await HTTP.get(`api/log/get-logs?page=${pageNumber}`)
     .then((res) => {
       componentStore.setLoading(false);
       activityList.value = res.data;

@@ -1,7 +1,7 @@
 <template>
-  <q-card class="my-card shadow-0 text-center">
+  <q-card class="my-card q-px-xs q-pb-md text-center">
     <q-card-section class="q-my-lg">
-      <div class="text-h4 text-weight-bold">Forget Password?</div>
+      <div class="text-h5 text-weight-bold">Forget Password?</div>
     </q-card-section>
     <q-card-section class="q-my-md">
       <q-avatar
@@ -13,13 +13,14 @@
       />
     </q-card-section>
     <q-card-section class="q-pt-none q-px-lg q-mx-md">
-      <div class="text-subtitle2 text-left">
+      <div class="text-subtitle1 text-center">
         Please provide the registered email address
       </div>
 
       <q-form @submit.prevent="onSubmit">
         <InputField
           color="green"
+          outlined
           v-model="form.email"
           :rules="[
             (val) => (val && val.length > 0) || 'Please enter an email address',
@@ -28,24 +29,33 @@
           iconName="email"
           type="email"
         />
-        <div class="text-caption text-center">
+        <div class="text-subtitle2 text-center">
           We will send you an email that will allow you to reset your password
         </div>
-        <q-btn
-          color="green"
-          class="full-width q-mt-lg"
-          type="submit"
-          rounded
-          label="Reset Password"
-        />
+        <div class="q-mt-lg">
+          <q-spinner-tail
+            v-if="loading"
+            class="full-width q-mt-sm"
+            size="2rem"
+            color="green"
+          />
+
+          <q-btn
+            v-else
+            color="green"
+            class="full-width"
+            type="submit"
+            rounded
+            label="Reset Password"
+          />
+        </div>
       </q-form>
     </q-card-section>
     <q-card-section class="q-my-none">
-      <span class="text-caption" color="blue">
+      <span class="text-subtitle2" color="blue">
         <router-link
           class="cursor-pointer text-weight-bold"
           style="color: #57b846 !important"
-          @click="userStore.setLoading(true)"
           to="/"
           >Back To Login</router-link
         >
@@ -59,9 +69,10 @@ import { ref } from "vue";
 import { Notify } from "quasar";
 import { useUserStore } from "../store/user-store";
 import { HTTP } from "@/helper/http-config";
-
+import { storeToRefs } from "pinia";
 
 const userStore = useUserStore();
+const { loading } = storeToRefs(useUserStore());
 
 const form = ref({
   email: "",
@@ -70,7 +81,7 @@ const form = ref({
 const onSubmit = async () => {
   userStore.setLoading(true);
 
-  await HTTP.post(`api/forgetpassword`, {
+  await HTTP.post(`api/auth/forget-password`, {
     email: form.value.email,
   })
     .then(() => {

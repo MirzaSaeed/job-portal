@@ -44,6 +44,11 @@ const routes = [
     },
   },
   {
+    path: "/:catchAll(.*)",
+    name: "notfound",
+    component: () => import("../components/NotFoundException.vue"),
+  },
+  {
     path: "/job-application",
     name: "jobApplication",
     component: () => import("../views/JobApplicationView.vue"),
@@ -106,11 +111,6 @@ const routes = [
         path: "profile",
         name: "userProfile",
         component: () => import("../components/UserProfile.vue"),
-      },
-      {
-        path: "/*",
-        name: "notfound",
-        component: () => import("../components/NotFoundException.vue"),
       },
     ],
   },

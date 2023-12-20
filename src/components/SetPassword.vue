@@ -1,5 +1,5 @@
 <template>
-  <q-card class="my-card shadow-0 text-center">
+  <q-card class="my-card q-py-lg text-center">
     <q-card-section class="q-my-lg">
       <div class="text-h6 text-weight-bold">
         Your account is <span style="color: green">verified!</span>
@@ -19,6 +19,7 @@
       <q-form @submit.prevent="onSubmit">
         <q-input
           class="q-py-sm q-mb-lg"
+          outlined
           v-model="form.password"
           color="green"
           label="Password"
@@ -40,6 +41,7 @@
 
         <q-input
           class="q-py-sm q-mb-lg"
+          outlined
           v-model="form.confirmPassword"
           color="green"
           label="Confirm Password"
@@ -59,13 +61,23 @@
           </template>
         </q-input>
 
-        <q-btn
-          color="green"
-          class="full-width q-mt-lg"
-          type="submit"
-          rounded
-          label="set Password"
-        />
+        <div class="q-mt-lg">
+          <q-spinner-tail
+            v-if="loading"
+            class="full-width q-mt-xs"
+            size="2rem"
+            color="green"
+          />
+
+          <q-btn
+            v-else
+            color="green"
+            class="full-width"
+            type="submit"
+            rounded
+            label="Set Password"
+          />
+        </div>
       </q-form>
     </q-card-section>
   </q-card>
@@ -77,9 +89,10 @@ import { Notify } from "quasar";
 import { useUserStore } from "../store/user-store";
 import { useRoute, useRouter } from "vue-router";
 import { HTTP } from "@/helper/http-config";
+import { storeToRefs } from "pinia";
 
 const userStore = useUserStore();
-
+const { loading } = storeToRefs(useUserStore());
 const router = useRouter();
 const route = useRoute();
 
@@ -105,21 +118,23 @@ const rules = [
 const isPwd = ref(true);
 
 const onSubmit = async () => {
-  await HTTP.post(`api/setpassword`, {
+  userStore.setLoading(true);
+  await HTTP.post(`api/auth/set-password`, {
     password: form.value.password,
     confirmPassword: form.value.confirmPassword,
     token: route.params.token,
   })
     .then(() => {
+      userStore.setLoading(false);
       Notify.create({
         type: "positive",
         position: "top",
         message: "Password has been created successful",
       });
-      userStore.setLoading(false);
       router.push("/");
     })
     .catch(() => {
+      userStore.setLoading(false);
       Notify.create({
         type: "negative",
         position: "top",

@@ -1,10 +1,5 @@
 <template>
-  <q-layout
-    view="hHh lpR lFf"
-    container
-    style="height: 100vh"
-    class="rounded-borders container"
-  >
+  <q-layout view="hHh lpR lFf" style="height: 100vh" class="rounded-borders">
     <q-header>
       <Navbar />
     </q-header>

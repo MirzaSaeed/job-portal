@@ -1,15 +1,17 @@
 <template>
   <q-dialog v-model="dialog">
     <q-card class="my-card">
-      <q-card-section class="row items-center q-pb-none">
-        <div class="text-subtitle1">Create User</div>
+      <q-card-section class="row items-center q-pb-md">
+        <div class="text-h5 text-bold">Create User</div>
         <q-space />
         <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
-
+      <q-separator />
+      <q-separator />
       <q-card-section class="q-pt-none q-px-lg q-mx-md">
-        <q-form @submit.prevent="onSubmit">
+        <q-form @submit.prevent="onSubmit" class="q-pt-lg">
           <InputField
+            outlined
             color="green"
             v-model="form.firstName"
             :rules="[
@@ -21,6 +23,7 @@
           />
           <InputField
             color="green"
+            outlined
             v-model="form.lastName"
             :rules="[
               (val) => (val && val.length > 0) || 'Please enter a last name',
@@ -31,6 +34,7 @@
           />
           <InputField
             color="green"
+            outlined
             v-model="form.email"
             :rules="[
               (val) =>
@@ -42,7 +46,7 @@
           />
           <q-btn
             color="green"
-            class="full-width q-my-lg"
+            class="full-width q-mb-lg q-mt-sm"
             type="submit"
             rounded
             label="Create User"
@@ -63,7 +67,6 @@ import { Notify } from "quasar";
 import { useUserStore } from "@/store/user-store";
 import { useRouter } from "vue-router";
 
-
 const router = useRouter();
 
 const userStore = useUserStore();
@@ -76,22 +79,25 @@ const form = ref({
 });
 
 const onSubmit = async () => {
-  await HTTP.post(`api/createuser`, {
+  useComponentStore().setLoading(true);
+  await HTTP.post(`api/auth/create-user`, {
     email: form.value.email,
     firstName: form.value.firstName,
     lastName: form.value.lastName,
   })
     .then(() => {
-      userStore.setLoading(true);
       Notify.create({
         type: "positive",
         position: "top",
         message: "Verification email has been send.",
       });
+      router.push("/dashboard/user-list");
+
       useComponentStore().toggleDialog();
-      userStore.setLoading(false);
+      useComponentStore().setLoading(false);
     })
     .catch((err) => {
+      useComponentStore().setLoading(false);
       if (err.response?.status === 400) {
         useUserStore().logoutUser();
         router.push("/");
@@ -109,6 +115,6 @@ const onSubmit = async () => {
 <style scoped>
 .my-card {
   width: 100%;
-  max-width: 350px;
+  max-width: 450px;
 }
 </style>

@@ -2,7 +2,7 @@
   <q-card class="my-card shadow-0">
     <q-item>
       <q-item-section class="">
-        <q-breadcrumbs class="q-pb-sm">
+        <q-breadcrumbs class="q-pb-sm text-subtitle1">
           <q-breadcrumbs-el
             style="color: green"
             label="Dashboard"
@@ -18,7 +18,7 @@
             :loading="loading"
             bordered
             title="Job Application List"
-            :rows="applicationList?.data"
+            :rows="applicationList?.rows"
             :columns="columns"
             :pagination="pagination"
             virtual-scroll
@@ -27,63 +27,31 @@
             <!-- top  -->
 
             <template v-slot:top-right>
-              <q-btn-dropdown flat color="green" class="q-mx-sm" label="Status">
-                <q-list>
-                  <q-item
-                    clickable
-                    v-close-popup
-                    v-model="dropDownFilter"
-                    @click="setFilter('')"
-                  >
-                    <q-item-section>
-                      <q-item-label>All</q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <q-item
-                    clickable
-                    v-close-popup
-                    v-model="dropDownFilter"
-                    @click="setFilter('accepted')"
-                  >
-                    <q-item-section>
-                      <q-item-label style="color: #53af50"
-                        >Accepted</q-item-label
-                      >
-                    </q-item-section>
-                  </q-item>
-
-                  <q-item
-                    clickable
-                    v-close-popup
-                    v-model="dropDownFilter"
-                    @click="setFilter('rejected')"
-                  >
-                    <q-item-section>
-                      <q-item-label style="color: red">Rejected</q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <q-item
-                    clickable
-                    v-close-popup
-                    v-model="dropDownFilter"
-                    @click="setFilter('pending')"
-                  >
-                    <q-item-section>
-                      <q-item-label style="color: orange">Pending</q-item-label>
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </q-btn-dropdown>
+              <div style="width: 180px">
+                <q-select
+                  dense
+                  class="q-mr-md"
+                  color="green"
+                  outlined
+                  v-model="dropDownFilter"
+                  :options="options"
+                  label="Status"
+                  @input="setFilter"
+                />
+              </div>
 
               <q-input
                 borderless
                 dense
+                outlined
+                color="green"
                 debounce="300"
+                class="text-subtitle1"
                 v-model="filter"
                 placeholder="Search"
               >
                 <template v-slot:append>
-                  <q-icon name="search" />
+                  <q-icon name="search" color="green-4" />
                 </template>
               </q-input>
             </template>
@@ -92,7 +60,7 @@
             <template v-slot:body="props">
               <q-tr :props="props">
                 <q-td key="index" :props="props">
-                  {{ applicationList?.data?.indexOf(props.row) + 1 }}
+                  {{ applicationList?.rows?.indexOf(props.row) + 1 }}
                 </q-td>
                 <q-td key="userName" :props="props">
                   {{ props.row.userName }}
@@ -152,6 +120,7 @@
                     round
                     icon="visibility"
                     color="white"
+                    :disable="loading"
                     text-color="black"
                     @click="onRowClick(props.row.applicantId)"
                     toggleUser="true"
@@ -170,6 +139,7 @@
                     icon="description"
                     color="white"
                     text-color="black"
+                    :disable="loading"
                     @click="
                       downloadCV(props.row.applicantId, props.row.userName)
                     "
@@ -296,6 +266,24 @@ const pagination = ref({
   totalItems: 0,
   rowsPerPage: 10,
 });
+const options = [
+  {
+    label: "All",
+    value: "",
+  },
+  {
+    label: "Accepted",
+    value: "accepted",
+  },
+  {
+    label: "Rejected",
+    value: "rejected",
+  },
+  {
+    label: "Pending",
+    value: "pending",
+  },
+];
 
 const columns = [
   {
@@ -358,7 +346,7 @@ const setFilter = (status) => {
 
 const onRowClick = async (applicantId) => {
   componentStore.setLoading(true);
-  await HTTP.get(`api/applicantProfile/${applicantId}`)
+  await HTTP.get(`api/applicant/applicant-profile/${applicantId}`)
     .then((res) => {
       componentStore.setLoading(false);
       userInfo.value = res.data.data;
@@ -376,7 +364,6 @@ const onRowClick = async (applicantId) => {
           type: "negative",
           position: "top",
         });
-        router.push("/*");
       }
     })
     .finally(() => {
@@ -386,7 +373,9 @@ const onRowClick = async (applicantId) => {
 
 const handleAction = async (action, applicantId) => {
   componentStore.setLoading(true);
-  await HTTP.patch(`api/update-applicants/${applicantId}`, { status: action })
+  await HTTP.patch(`api/applicant/update-applicants/${applicantId}`, {
+    status: action,
+  })
     .then(() => {
       handlePagination(page.value).then(() => {
         componentStore.setLoading(false);
@@ -412,7 +401,7 @@ const handleAction = async (action, applicantId) => {
 const downloadCV = async (applicantId, userName) => {
   componentStore.setLoading(true);
 
-  await HTTP.get(`/api/download-cv/${applicantId}`, {
+  await HTTP.get(`/api/applicant/download-cv/${applicantId}`, {
     responseType: "blob",
   })
     .then((res) => {
@@ -451,16 +440,15 @@ const downloadCV = async (applicantId, userName) => {
 const handlePagination = async (pageNumber) => {
   componentStore.setLoading(true);
   await HTTP.get(
-    `api/get-applicants?page=${pageNumber}&search=${filter.value}&status=${dropDownFilter.value}`
+    `api/applicant/get-applicants?page=${pageNumber}&search=${filter.value}&status=${dropDownFilter.value}`
   )
     .then((res) => {
       componentStore.setLoading(false);
 
-      applicationList.value = res.data;
-      page.value = res.data.pagination.page;
-      pagination.value.page = res.data.pagination.page;
-      pagination.value.rowsPerPage = res.data.pagination.page;
-      pagination.value.totalItems = res.data.pagination.totalUsers;
+      applicationList.value = res.data?.data;
+      page.value = res.data?.data?.pagination.page;
+      pagination.value.page = res.data?.data?.pagination.page;
+      pagination.value.totalItems = res.data?.data?.pagination.totalUsers;
     })
     .catch((err) => {
       componentStore.setLoading(false);
@@ -473,7 +461,6 @@ const handlePagination = async (pageNumber) => {
           type: "negative",
           position: "top",
         });
-        router.push("/*");
       }
     })
     .finally(() => {
@@ -483,14 +470,13 @@ const handlePagination = async (pageNumber) => {
 
 watchEffect(async () => {
   componentStore.setLoading(true);
-  await HTTP.get(`api/get-applicants?search=${filter.value}`)
+  await HTTP.get(`api/applicant/get-applicants?search=${filter.value}`)
     .then((res) => {
       componentStore.setLoading(false);
-      applicationList.value = res.data;
-      page.value = res.data.pagination.page;
-      pagination.value.page = res.data.pagination.page;
-      pagination.value.rowsPerPage = res.data.pagination.page;
-      pagination.value.totalItems = res.data.pagination.totalUsers;
+      applicationList.value = res.data?.data;
+      page.value = res.data?.data?.pagination.page;
+      pagination.value.page = res.data?.data?.pagination.page;
+      pagination.value.totalItems = res.data?.data?.pagination.totalUsers;
     })
     .catch((err) => {
       componentStore.setLoading(false);
@@ -503,7 +489,6 @@ watchEffect(async () => {
           type: "negative",
           position: "top",
         });
-        router.push("/*");
       }
     })
     .finally(() => {
@@ -512,14 +497,15 @@ watchEffect(async () => {
 });
 watchEffect(async () => {
   componentStore.setLoading(true);
-  await HTTP.get(`api/get-applicants?status=${dropDownFilter.value}`)
+  await HTTP.get(
+    `api/applicant/get-applicants?status=${dropDownFilter.value?.value}`
+  )
     .then((res) => {
       componentStore.setLoading(false);
-      applicationList.value = res.data;
-      page.value = res.data.pagination.page;
-      pagination.value.page = res.data.pagination.page;
-      pagination.value.rowsPerPage = res.data.pagination.page;
-      pagination.value.totalItems = res.data.pagination.totalUsers;
+      applicationList.value = res.data?.data;
+      page.value = res.data?.data?.pagination.page;
+      pagination.value.page = res.data?.data?.pagination.page;
+      pagination.value.totalItems = res.data?.data?.pagination.totalUsers;
     })
     .catch((err) => {
       componentStore.setLoading(false);
@@ -532,7 +518,6 @@ watchEffect(async () => {
           type: "negative",
           position: "top",
         });
-        router.push("/*");
       }
     })
     .finally(() => {

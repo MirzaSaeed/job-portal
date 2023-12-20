@@ -1,5 +1,5 @@
 <template>
-  <q-card class="my-card shadow-0 text-center">
+  <q-card class="my-card q-pb-lg text-center">
     <q-card-section class="q-my-lg">
       <div class="text-h4 text-weight-bold">Job Application</div>
     </q-card-section>
@@ -21,6 +21,7 @@
             <InputField
               color="green"
               v-model="form.userName"
+              outlined
               :rules="[
                 (val) =>
                   (val && val.length > 0) || 'Please enter your full name',
@@ -33,6 +34,7 @@
           <div class="col-12 col-md-6 col-lg-6 q-px-md">
             <!-- email  -->
             <InputField
+              outlined
               color="green"
               v-model="form.email"
               :rules="[
@@ -49,6 +51,7 @@
             <InputField
               color="green"
               v-model="form.cnic"
+              outlined
               :rules="[
                 (val) => (val && val.length > 0) || 'Please enter a valid cnic',
               ]"
@@ -64,6 +67,7 @@
             <InputField
               color="green"
               v-model="form.phoneNumber"
+              outlined
               :rules="[
                 (val) =>
                   (val && val.length > 0) ||
@@ -82,6 +86,7 @@
             <InputField
               color="green"
               v-model="form.age"
+              outlined
               :rules="[
                 (val) =>
                   (val && val.length > 0) || 'Please enter a valid address',
@@ -98,6 +103,7 @@
             <!-- address  -->
             <InputField
               color="green"
+              outlined
               v-model="form.address"
               :rules="[
                 (val) =>
@@ -113,6 +119,7 @@
               class="q-py-md q-mb-sm"
               v-model="form.qualification"
               color="green"
+              outlined
               :options="options"
               label="Qualification"
             >
@@ -131,6 +138,7 @@
               max-file-size="4000000"
               v-model="form.cv"
               label="Upload your CV"
+              outlined
               @rejected="onRejected"
               accept=".pdf"
               hint="PDF only (4 MB max) "
@@ -150,6 +158,16 @@
           label="Submit "
         />
       </q-form>
+    </q-card-section>
+    <q-card-section class="q-my-none">
+      <span class="text-subtitle2" color="blue">
+        <router-link
+          class="cursor-pointer text-weight-bold"
+          style="color: #57b846 !important"
+          to="/"
+          >Back To Login</router-link
+        >
+      </span>
     </q-card-section>
   </q-card>
 </template>
@@ -196,7 +214,7 @@ const onSubmit = async () => {
   formData.append("phoneNumber", `+92 3${form.value.phoneNumber}`);
   formData.append("cv", form.value.cv);
 
-  await HTTP.post(`api/submit-form`, formData, {
+  await HTTP.post(`api/applicant/submit-form`, formData, {
     headers: { "content-type": "multipart/form-data" },
   })
     .then(() => {
