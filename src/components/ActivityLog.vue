@@ -14,12 +14,14 @@
         <div class="q-pa-md">
           <q-table
             :grid="$q.screen.xs"
+            style="max-height: 450px; height: 100%"
             flat
             :loading="loading"
             bordered
             title="Activities"
             :rows="activityList?.data"
             :columns="columns"
+            :rows-per-page-options="[0]"
             :pagination="pagination"
             virtual-scroll
           >
@@ -37,7 +39,7 @@
                   {{ props.row.email ? props.row.email : "No Email Exist" }}
                 </q-td>
 
-                <q-td key="activity" :props="props">
+                <q-td key="activity" auto-width :props="props">
                   {{
                     `${
                       props.row.name ? props.row.name : "User"
@@ -87,7 +89,7 @@ import { useComponentStore } from "@/store/component-store";
 import { useUserStore } from "@/store/user-store";
 import { storeToRefs } from "pinia";
 import { Notify } from "quasar";
-import {  onMounted, ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -141,7 +143,6 @@ const columns = [
 
 const { loading } = storeToRefs(useComponentStore());
 
-
 const formatTime = (timestamp) => {
   const date = new Date(timestamp);
   const hours = date.getHours();
@@ -173,12 +174,17 @@ const handlePagination = async (pageNumber) => {
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response?.status === 400) {
+      if (err.response?.status === 401) {
+        Notify.create({
+          type: "negative",
+          position: "top",
+          message: "Session timeout",
+        });
         userStore.logoutUser();
         router.push("/");
       } else {
         Notify.create({
-          message: "Activities Not Found",
+          message: err.response?.data?.message,
           type: "negative",
           position: "top",
         });

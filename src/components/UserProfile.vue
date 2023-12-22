@@ -112,7 +112,7 @@ import { useComponentStore } from "@/store/component-store";
 import { useUserStore } from "@/store/user-store";
 import { storeToRefs } from "pinia";
 import { Notify } from "quasar";
-import { onMounted, ref } from "vue";
+import {  ref } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -161,12 +161,16 @@ const onSubmit = async () => {
     .catch((err) => {
       componentStore.setLoading(false);
 
-      if (err.response?.status === 400) {
-        useUserStore().logoutUser();
+     if (err.response?.status === 401) {
+        Notify.create({
+          type: "negative",
+          position: "top",
+          message: "Session timeout",
+        }); useUserStore().logoutUser();
         router.push("/");
       } else {
         Notify.create({
-          message: "Error in password changing",
+          message: err.response?.data?.message,
           type: "negative",
           position: "top",
         });
@@ -177,9 +181,7 @@ const onSubmit = async () => {
     });
 };
 
-onMounted(async () => {
-  componentStore.setLoading(true);
-});
+
 </script>
 
 <style scoped>

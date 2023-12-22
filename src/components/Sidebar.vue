@@ -1,8 +1,11 @@
 <template>
-  <q-drawer 
+  <q-drawer
     v-model="drawer"
     show-if-above
     :width="300"
+    :mini="miniState"
+    @mouseover="miniState = false"
+    @mouseout="miniState = true"
     :breakpoint="992"
     bordered
     class="bg-grey-11"
@@ -44,7 +47,7 @@
         >
           <q-item class="sidebar-list q-py-md" clickable v-ripple>
             <q-item-section avatar>
-              <q-icon class="sidebar-item" name="list" color="black" />
+              <q-icon class="sidebar-item" name="checklist" color="black" />
             </q-item-section>
             <q-item-section class="sidebar-item">
               Activity Logs
@@ -72,9 +75,12 @@
 import { useComponentStore } from "@/store/component-store";
 import { useUserStore } from "@/store/user-store";
 import { storeToRefs } from "pinia";
+import { ref } from "vue";
 
 const { drawer } = storeToRefs(useComponentStore());
 const { isAdmin } = storeToRefs(useUserStore());
+
+const miniState = ref(true);
 
 const toggleDrawer = () => {
   useComponentStore().toggleDrawer();
@@ -113,8 +119,7 @@ const toggleDrawer = () => {
 }
 
 a.router-link-exact-active .sidebar-item {
-   color: green !important;
+  color: green !important;
   scale: 1.1;
-
 }
 </style>

@@ -70,6 +70,7 @@ import { useUserStore } from "../store/user-store";
 import { useComponentStore } from "../store/component-store";
 import { HTTP } from "@/helper/http-config";
 import { useRouter } from "vue-router";
+import { Notify } from "quasar";
 
 const router = useRouter();
 const componentStore = useComponentStore();
@@ -86,17 +87,25 @@ const toggleDrawer = () => {
 };
 
 const getUserProfile = async () => {
-  useUserStore().setLoading(true);
   await HTTP.get(`api/user/me`)
     .then((res) => {
       useUserStore().getProfileData(res.data);
-      useUserStore().setLoading(false);
     })
     .catch((err) => {
-      useUserStore().setLoading(false);
-      if (err.response?.status === 400) {
+      if (err.response?.status === 401) {
+        Notify.create({
+          type: "negative",
+          position: "top",
+          message: "Session timeout",
+        });
         useUserStore().logoutUser();
         router.push("/");
+      } else {
+        Notify.create({
+          message: err.response?.data?.message,
+          type: "negative",
+          position: "top",
+        });
       }
     });
 };

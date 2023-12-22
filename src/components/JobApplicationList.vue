@@ -15,8 +15,10 @@
           <q-table
             :grid="$q.screen.xs"
             flat
+            style="max-height: 450px; height: 100%"
             :loading="loading"
             bordered
+            :rows-per-page-options="[0]"
             title="Job Application List"
             :rows="applicationList?.rows"
             :columns="columns"
@@ -92,7 +94,7 @@
                     label="Rejected"
                   />
                 </q-td>
-                <q-td key="action" :props="props">
+                <q-td key="action" auto-width :props="props">
                   <span v-if="props.row.status === 'pending'">
                     <q-btn
                       flat
@@ -132,7 +134,7 @@
                     </q-tooltip>
                   </q-btn>
                 </q-td>
-                <q-td key="cv" :props="props">
+                <q-td key="cv" auto-width :props="props">
                   <q-btn
                     flat
                     round
@@ -184,52 +186,58 @@
               />
             </template>
           </q-table>
+
           <q-dialog v-model="dialogValue">
-            <q-card id="my-card">
-              <q-card-section class="row items-center q-pb-none">
-                <div class="text-subtitle1">Applicant Profile</div>
+            <q-card
+              class="my-card q-pb-md"
+              style="width: 100%; max-width: 350px"
+            >
+              <q-card-section class="row items-center q-pb-sm">
+                <div class="text-h6 text-bold">Applicant Profile</div>
                 <q-space />
                 <q-btn icon="close" flat round dense v-close-popup />
               </q-card-section>
-              <q-item class="q-pb-lg">
-                <q-item-section side>
+              <q-separator />
+
+              <q-card-section
+                class="d-flex column justify-center items-center content-center q-pb-lg q-mt-md"
+              >
+                <div class="q-pb-sm">
                   <q-avatar round size="48px">
                     <img src="../assets/svg-icon/user-profile.svg" alt="" />
                   </q-avatar>
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>
-                    <span>Name: </span>
-                    <span class="text-bold"> {{ userInfo?.userName }} </span>
-                  </q-item-label>
-                  <q-item-label>
-                    Email:
-                    <span class="text-bold"> {{ userInfo?.email }} </span>
-                  </q-item-label>
-                  <q-item-label>
-                    CNIC:
-                    <span class="text-bold"> {{ userInfo?.cnic }} </span>
-                  </q-item-label>
-                  <q-item-label>
-                    Phone Number:
-                    <span class="text-bold"> {{ userInfo?.phoneNumber }} </span>
-                  </q-item-label>
-                  <q-item-label>
-                    Age:
-                    <span class="text-bold"> {{ userInfo?.age }} </span>
-                  </q-item-label>
-                  <q-item-label>
-                    Qualification:
-                    <span class="text-bold">
-                      {{ userInfo?.qualification }}
-                    </span>
-                  </q-item-label>
-                  <q-item-label>
-                    Address:
-                    <span class="text-bold"> {{ userInfo?.address }} </span>
-                  </q-item-label>
-                </q-item-section>
-              </q-item>
+                </div>
+
+                <q-item-label class="text-h6 q-pb-md">
+                  {{ userInfo?.userName }}</q-item-label
+                >
+                <div>
+                  <q-item-label class="text-subtitle1">
+                    <span class="text-bold">Email: </span
+                    >{{ userInfo?.email }}</q-item-label
+                  >
+                  <q-item-label class="text-subtitle1">
+                    <span class="text-bold">CNIC: </span>
+                    {{ userInfo?.cnic }}</q-item-label
+                  >
+                  <q-item-label class="text-subtitle1">
+                    <span class="text-bold">Age: </span
+                    >{{ userInfo?.age }}</q-item-label
+                  >
+                  <q-item-label class="text-subtitle1">
+                    <span class="text-bold">Phone Number: </span>
+                    {{ userInfo?.phoneNumber }}</q-item-label
+                  >
+                  <q-item-label class="text-subtitle1">
+                    <span class="text-bold">Qualification: </span
+                    >{{ userInfo?.qualification }}</q-item-label
+                  >
+                  <q-item-label class="text-subtitle1">
+                    <span class="text-bold">Address: </span
+                    >{{ userInfo?.address }}</q-item-label
+                  >
+                </div>
+              </q-card-section>
             </q-card>
           </q-dialog>
         </div>
@@ -244,7 +252,7 @@ import { useComponentStore } from "@/store/component-store";
 import { useUserStore } from "@/store/user-store";
 import { storeToRefs } from "pinia";
 import { Notify } from "quasar";
-import { onMounted, ref, watch, watchEffect } from "vue";
+import { onMounted, ref, watchEffect } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -353,14 +361,18 @@ const onRowClick = async (applicantId) => {
       dialogValue.value = true;
     })
     .catch((err) => {
-      console.log(err);
       componentStore.setLoading(false);
-      if (err.response?.status === 400) {
+      if (err.response?.status === 401) {
+        Notify.create({
+          type: "negative",
+          position: "top",
+          message: "Session timeout",
+        });
         userStore.logoutUser();
         router.push("/");
       } else {
         Notify.create({
-          message: "User Application Not Found",
+          message: err.response?.data?.message,
           type: "negative",
           position: "top",
         });
@@ -377,18 +389,23 @@ const handleAction = async (action, applicantId) => {
     status: action,
   })
     .then(() => {
-      handlePagination(page.value).then(() => {
+      handlePagination(page.value, { value: "" }, { value: "" }).then(() => {
         componentStore.setLoading(false);
       });
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response?.status === 400) {
+      if (err.response?.status === 401) {
+        Notify.create({
+          type: "negative",
+          position: "top",
+          message: "Session timeout",
+        });
         userStore.logoutUser();
         router.push("/");
       } else {
         Notify.create({
-          message: "Users Application status not updated",
+          message: err.response?.data?.message,
           type: "negative",
           position: "top",
         });
@@ -424,12 +441,17 @@ const downloadCV = async (applicantId, userName) => {
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response?.status === 400) {
+      if (err.response?.status === 401) {
+        Notify.create({
+          type: "negative",
+          position: "top",
+          message: "Session timeout",
+        });
         userStore.logoutUser();
         router.push("/");
       } else {
         Notify.create({
-          message: "Error in downloading CV",
+          message: err.response?.data?.message,
           type: "negative",
           position: "top",
         });
@@ -437,10 +459,14 @@ const downloadCV = async (applicantId, userName) => {
     });
 };
 
-const handlePagination = async (pageNumber) => {
+const handlePagination = async (
+  pageNumber,
+  filterValue,
+  dropDownFilterValue
+) => {
   componentStore.setLoading(true);
   await HTTP.get(
-    `api/applicant/get-applicants?page=${pageNumber}&search=${filter.value}&status=${dropDownFilter.value}`
+    `api/applicant/get-applicants?page=${pageNumber}&search=${filterValue?.value}&status=${dropDownFilterValue?.value}`
   )
     .then((res) => {
       componentStore.setLoading(false);
@@ -452,12 +478,17 @@ const handlePagination = async (pageNumber) => {
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response?.status === 400) {
+      if (err.response?.status === 401) {
+        Notify.create({
+          type: "negative",
+          position: "top",
+          message: "Session timeout",
+        });
         userStore.logoutUser();
         router.push("/");
       } else {
         Notify.create({
-          message: "Applications Not Found",
+          message: err.response?.data?.message,
           type: "negative",
           position: "top",
         });
@@ -470,64 +501,16 @@ const handlePagination = async (pageNumber) => {
 
 watchEffect(async () => {
   componentStore.setLoading(true);
-  await HTTP.get(`api/applicant/get-applicants?search=${filter.value}`)
-    .then((res) => {
-      componentStore.setLoading(false);
-      applicationList.value = res.data?.data;
-      page.value = res.data?.data?.pagination.page;
-      pagination.value.page = res.data?.data?.pagination.page;
-      pagination.value.totalItems = res.data?.data?.pagination.totalUsers;
-    })
-    .catch((err) => {
-      componentStore.setLoading(false);
-      if (err.response?.status === 400) {
-        userStore.logoutUser();
-        router.push("/");
-      } else {
-        Notify.create({
-          message: "Users Not Found",
-          type: "negative",
-          position: "top",
-        });
-      }
-    })
-    .finally(() => {
-      componentStore.setLoading(false);
-    });
-});
-watchEffect(async () => {
-  componentStore.setLoading(true);
-  await HTTP.get(
-    `api/applicant/get-applicants?status=${dropDownFilter.value?.value}`
-  )
-    .then((res) => {
-      componentStore.setLoading(false);
-      applicationList.value = res.data?.data;
-      page.value = res.data?.data?.pagination.page;
-      pagination.value.page = res.data?.data?.pagination.page;
-      pagination.value.totalItems = res.data?.data?.pagination.totalUsers;
-    })
-    .catch((err) => {
-      componentStore.setLoading(false);
-      if (err.response?.status === 400) {
-        userStore.logoutUser();
-        router.push("/");
-      } else {
-        Notify.create({
-          message: "Users Not Found",
-          type: "negative",
-          position: "top",
-        });
-      }
-    })
-    .finally(() => {
-      componentStore.setLoading(false);
-    });
+  handlePagination(
+    page.value,
+    filter.value || { value: "" },
+    dropDownFilter.value || { value: "" }
+  );
 });
 
 onMounted(async () => {
   componentStore.setLoading(true);
-  handlePagination(page.value);
+  handlePagination(page.value, { value: "" }, { value: "" });
 });
 </script>
 

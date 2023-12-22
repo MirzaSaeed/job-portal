@@ -1,6 +1,6 @@
 <template>
   <q-input
-    class="q-py-md q-mb-lg"
+    :class="inputClass"
     color="green"
     @input="updateModelValue"
     :value="value"
@@ -13,7 +13,7 @@
 </template>
 
 <script setup>
-const props = defineProps([
+ defineProps([
   "color",
   "type",
   "inputClass",

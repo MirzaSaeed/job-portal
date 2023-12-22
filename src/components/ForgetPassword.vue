@@ -20,6 +20,7 @@
       <q-form @submit.prevent="onSubmit">
         <InputField
           color="green"
+          inputClass="q-py-md q-mb-lg"
           outlined
           v-model="form.email"
           :rules="[
@@ -94,13 +95,13 @@ const onSubmit = async () => {
         message: "Check your email account",
       });
     })
-    .catch(() => {
+    .catch((err) => {
       userStore.setLoading(false);
 
       Notify.create({
         type: "negative",
         position: "top",
-        message: "Not Registered User",
+        message: err.response?.data?.message,
       });
     })
     .finally(() => {

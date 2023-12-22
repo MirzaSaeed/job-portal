@@ -27,6 +27,7 @@
         <InputField
           color="green"
           outlined
+          inputClass="q-py-md q-mb-lg"
           v-model="form.email"
           :rules="[
             (val) => (val && val.length > 0) || 'Please enter an email address',
@@ -130,7 +131,7 @@ const onSubmit = async () => {
       });
       router.push("/dashboard");
     })
-    .catch((err) => {
+    .catch(() => {
       userStore.setLoading(false);
       Notify.create({
         type: "negative",

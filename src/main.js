@@ -5,7 +5,7 @@ import { Quasar } from "quasar";
 import quasarUserOptions from "./quasar-user-options";
 import pinia from "./store";
 import InputField from "./components/InputField.vue";
-import VueSocketIO from "vue-socket.io";
+// import VueSocketIO from "vue-socket.io";
 
 const app = createApp(App);
 // const vueSocket = new VueSocketIO({

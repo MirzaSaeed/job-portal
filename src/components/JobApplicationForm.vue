@@ -3,15 +3,6 @@
     <q-card-section class="q-my-lg">
       <div class="text-h4 text-weight-bold">Job Application</div>
     </q-card-section>
-    <!-- <q-card-section class="q-my-md">
-      <q-avatar
-        size="80px"
-        font-size="42px"
-        color="grey-12"
-        text-color="green-4"
-        icon="bag"
-      />
-    </q-card-section> -->
 
     <q-card-section class="q-pt-none q-px-lg q-mx-md">
       <q-form ref="userForm" @submit="onSubmit">
@@ -21,6 +12,7 @@
             <InputField
               color="green"
               v-model="form.userName"
+              inputClass="q-py-md q-mb-lg"
               outlined
               :rules="[
                 (val) =>
@@ -35,6 +27,7 @@
             <!-- email  -->
             <InputField
               outlined
+              inputClass="q-py-md q-mb-lg"
               color="green"
               v-model="form.email"
               :rules="[
@@ -51,6 +44,7 @@
             <InputField
               color="green"
               v-model="form.cnic"
+              inputClass="q-py-md q-mb-lg"
               outlined
               :rules="[
                 (val) => (val && val.length > 0) || 'Please enter a valid cnic',
@@ -65,6 +59,7 @@
           <div class="col-12 col-md-6 col-lg-6 q-px-md">
             <!-- phone number  -->
             <InputField
+              inputClass="q-py-md q-mb-lg"
               color="green"
               v-model="form.phoneNumber"
               outlined
@@ -85,6 +80,7 @@
             <!-- age -->
             <InputField
               color="green"
+              inputClass="q-py-md q-mb-lg"
               v-model="form.age"
               outlined
               :rules="[
@@ -103,6 +99,7 @@
             <!-- address  -->
             <InputField
               color="green"
+              inputClass="q-py-md q-mb-lg"
               outlined
               v-model="form.address"
               :rules="[
@@ -159,16 +156,6 @@
         />
       </q-form>
     </q-card-section>
-    <q-card-section class="q-my-none">
-      <span class="text-subtitle2" color="blue">
-        <router-link
-          class="cursor-pointer text-weight-bold"
-          style="color: #57b846 !important"
-          to="/"
-          >Back To Login</router-link
-        >
-      </span>
-    </q-card-section>
   </q-card>
 </template>
 
@@ -207,11 +194,11 @@ const onSubmit = async () => {
   const formData = new FormData();
   formData.append("userName", form.value.userName);
   formData.append("email", form.value.email);
-  formData.append("cnic", form.value.cnic);
+  formData.append("cnic", parseInt(form.value.cnic.replaceAll(" - ", ""), 10));
   formData.append("address", form.value.address);
   formData.append("qualification", form.value.qualification);
   formData.append("age", form.value.age);
-  formData.append("phoneNumber", `+92 3${form.value.phoneNumber}`);
+  formData.append("phoneNumber", form.value.phoneNumber.replaceAll(" ", ""));
   formData.append("cv", form.value.cv);
 
   await HTTP.post(`api/applicant/submit-form`, formData, {
@@ -232,11 +219,11 @@ const onSubmit = async () => {
       form.value.phoneNumber = " ";
       form.value.cv = " ";
     })
-    .catch(() => {
+    .catch((err) => {
       Notify.create({
         type: "negative",
         position: "top",
-        message: "Error in submission",
+        message: err?.response?.data?.message,
       });
     });
 };

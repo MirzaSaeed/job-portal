@@ -68,4 +68,21 @@ const { isAuth, token } = storeToRefs(useUserStore());
     max-width: 1440px;
   }
 }
+
+/* Scroll bar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background-color:#65b87d;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(153, 241, 153);
+  /* transition: all ease-in-out 0.2s; */
+  
+}
+::-webkit-scrollbar-track {
+  background-color: rgb(230, 230, 230)
+}
 </style>

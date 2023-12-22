@@ -1,9 +1,6 @@
 <template>
-  <q-page
-    :class="loading && 'text-center column justify-center content-center'"
-  >
-    <q-spinner-tail v-if="loading" size="3rem" color="green" />
-    <router-view v-else />
+  <q-page>
+    <router-view />
     <q-btn
       dense
       round
@@ -20,82 +17,69 @@
       <q-menu
         anchor="top left"
         self="bottom end"
-        transition-show="scale"
-        transition-hide="scale"
+        transition-show="jump-down"
+        transition-hide="jump-up"
         fit
       >
-        <q-list style="min-width: 300px">
+        <q-list style="max-width: 300px">
           <q-item>
             <q-item-section class="text-subtitle1 text-bold">
               Customer Support
             </q-item-section>
           </q-item>
           <q-separator />
-          <q-item style="height: 30vh" class="d-flex column justify-end">
-            <div class="q-pa-md row justify-center" style="overflow: auto">
-              <div style="width: 100%; max-width: 300px">
+          <q-item
+            style="height: 40vh"
+            :class="
+              botChat.length > 0
+                ? ' d-flex column justify-end'
+                : 'd-flex column justify-center items-center'
+            "
+          >
+            <div
+              v-if="botChat.length > 0"
+              class="q-pa-md row justify-center"
+              style="overflow: auto"
+            >
+              <div
+                v-for="(messages, index) in botChat"
+                :key="index"
+                style="width: 100%; max-width: 300px"
+              >
                 <q-chat-message
-                  name="me"
+                  :name="messages.user === 'loggedIn' ? 'user' : 'bot'"
                   size="sm"
-                  avatar="https://cdn.quasar.dev/img/avatar1.jpg"
-                  :text="['hey, how are you? ']"
-                  stamp="7 minutes ago"
-                  sent
+                  :stamp="formatTime(messages.createdAt)"
+                  :avatar="
+                    messages.user === 'loggedIn'
+                      ? 'https://icon-library.com/images/0234605a9c.svg.svg'
+                      : 'https://freesvg.org/img/1538298822.png'
+                  "
+                  :text="[messages.message]"
+                  :sent="messages.user === 'loggedIn'"
                   text-color="white"
-                  bg-color="green-7"
-                /><q-chat-message
-                  name="me"
-                  size="sm"
-                  avatar="https://cdn.quasar.dev/img/avatar1.jpg"
-                  :text="['hey, how are you?']"
-                  stamp="7 minutes ago"
-                  sent
-                  text-color="white"
-                  bg-color="green-7"
-                /><q-chat-message
-                  name="me"
-                  size="sm"
-                  avatar="https://cdn.quasar.dev/img/avatar1.jpg"
-                  :text="['hey, how are you?']"
-                  stamp="7 minutes ago"
-                  sent
-                  text-color="white"
-                  bg-color="green-7"
-                /><q-chat-message
-                  name="me"
-                  size="sm"
-                  avatar="https://cdn.quasar.dev/img/avatar1.jpg"
-                  :text="['hey, how are you?']"
-                  stamp="7 minutes ago"
-                  sent
-                  text-color="white"
-                  bg-color="green-7"
-                /><q-chat-message
-                  name="me"
-                  size="sm"
-                  avatar="https://cdn.quasar.dev/img/avatar1.jpg"
-                  :text="['hey, how are you?']"
-                  stamp="7 minutes ago"
-                  sent
-                  text-color="white"
-                  bg-color="green-7"
-                />
-                <q-chat-message
-                  name="Jane"
-                  avatar="https://cdn.quasar.dev/img/avatar5.jpg"
-                  size="sm"
-                  :text="['doing fine, how r you?']"
-                  stamp="4 minutes ago"
-                  text-color="white"
-                  bg-color="green-4"
+                  :bg-color="
+                    messages.user === 'loggedIn' ? 'green-7' : 'grey-7'
+                  "
                 />
               </div>
+            </div>
+            <div
+              v-else
+              class="q-pa-md d-flex column justify-center items-center"
+              style="overflow: auto"
+            >
+              <q-item-section>No Chat Exist!</q-item-section>
+              <q-item-section class="text-subtitle1"
+                >Start to chat for support</q-item-section
+              >
             </div>
           </q-item>
           <q-separator />
           <q-item>
             <q-item-section>
               <q-input
+                @keypress.enter="sendMessage"
                 outlined
                 rounded
                 dense
@@ -109,9 +93,9 @@
                     name="send"
                     class="cursor-pointer"
                     type="submit"
-                    @click="send"
+                    @click="sendMessage"
                     size="13"
-                    color="green-4"
+                    color="green"
                   />
                 </template> </q-input
             ></q-item-section>
@@ -123,73 +107,59 @@
 </template>
 
 <script setup>
-import {
-  onBeforeMount,
-  onBeforeUnmount,
-  onMounted,
-  reactive,
-  ref,
-  watch,
-} from "vue";
+import { onBeforeMount, onMounted, ref } from "vue";
 import { useUserStore } from "../store/user-store";
 import { storeToRefs } from "pinia";
-// import { io } from "socket.io-client";
+import { io } from "socket.io-client";
 import { HTTP } from "@/helper/http-config";
 import { useRouter } from "vue-router";
+import { Notify } from "quasar";
 
 const router = useRouter();
 
 const userStore = useUserStore();
-const { loading, profile } = storeToRefs(useUserStore());
-// const socket = io(process.env.VUE_APP_BASE_URL, {
-//   withCredentials: true,
-// });
+const { botChat } = storeToRefs(useUserStore());
+const formatTime = (timestamp) => {
+  const date = new Date(timestamp);
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? "PM" : "AM";
+
+  const formattedHours = hours % 12 || 12;
+
+  const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+
+  return `${formattedHours}:${formattedMinutes} ${ampm}`;
+};
+const socketOptions = {
+  transports: ["websocket"],
+  autoConnect: true,
+  reconnection: true,
+  reconnectionAttempts: 3,
+  timeout: 5000,
+};
+
+const socket = io(process.env.VUE_APP_BASE_URL, socketOptions);
+
 let message = ref("");
-let typing = ref(false);
-let ready = ref(false);
-let info = reactive([]);
-let connections = ref(0);
-const messages = ref([]);
-const userName = ref(null);
-
-// Socket event handlers
-const onConnect = () => {
-  console.log("Connected to server");
-};
-
-const onDisconnect = () => {
-  console.log("Disconnected from server");
-};
-
-const onChatMessage = (msg) => {
-  messages.value.push(msg);
-};
 
 const sendMessage = () => {
-  if (message.value.trim() !== "") {
-    // Assuming that $socket is available globally, you may need to adjust this
-    this.$socket.emit("chat message", message.value);
-    message.value = "";
-  }
+  socket.emit("chat message", message.value);
+  userStore.pushChat({
+    message: message.value,
+    user: "loggedIn",
+    createdAt: new Date(),
+  });
+  message.value = "";
 };
-// watch(newMessage, (newMessage, preNewMessage) => {
-//   newMessage ? socket.emit("typing", profile?.name) : socket.emit("stopTyping");
-// });
-
-// const send = () => {
-//   console.log(newMessage.value);
-//   messages.push({
-//     message: newMessage.value,
-//     type: 0,
-//     user: "Me",
-//   });
-
-//   socket.emit("chat-message", {
-//     message: newMessage.value,
-//     user: profile?.name,
-//   });
-//   newMessage.value = " ";
-// };
+socket.on("chat message", (res) => {
+  console.log("Recived message from server", res);
+  userStore.pushChat({
+    message: res.message,
+    user: res.user,
+    createdAt: new Date(),
+  });
+});
 
 onMounted(async () => {
   userStore.setLoading(true);
@@ -200,7 +170,12 @@ onMounted(async () => {
     })
     .catch((err) => {
       useUserStore().setLoading(false);
-      if (err.response?.status === 400) {
+      if (err.response?.status === 401) {
+        Notify.create({
+          type: "negative",
+          position: "top",
+          message: "Session timeout",
+        });
         useUserStore().logoutUser();
         router.push("/");
       }

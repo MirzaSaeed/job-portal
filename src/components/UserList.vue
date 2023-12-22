@@ -12,22 +12,57 @@
         </q-breadcrumbs>
         <q-separator />
         <div class="q-pa-md">
-          <div class="q-px-md">
-            <p class="text-subtitle1">
-              Total Users:
-              <span class="text-bold">{{ users?.count }}</span>
-            </p>
-            <p class="text-subtitle1">
-              Total Verified Users:
-              <span class="text-bold">{{ totalVerifiedUsers }}</span>
-            </p>
-            <p class="text-subtitle1">
-              Total Not Verified Users:
-              <span class="text-bold">{{ totalNotVerifiedUsers }}</span>
-            </p>
+          <div class="q-px-md row d-flex items-center">
+            <div
+              class="total-users col-12 col-md-6 col-md-6 col-sm-12 row d-flex justify-start"
+            >
+              <p class="text-subtitle1 col-12 col-md-3 col-lg-3 col-sm-6">
+                Total Users:
+                <span class="text-bold">{{ users?.count }}</span>
+              </p>
+              <p class="text-subtitle1 col-12 col-md-3 col-lg-3 col-sm-6">
+                Verified Users:
+                <span class="text-bold">{{ totalVerifiedUsers }}</span>
+              </p>
+              <p class="text-subtitle1 col-12 col-md-4 col-lg-4 col-sm-6">
+                Unverified Users:
+                <span class="text-bold">{{ totalNotVerifiedUsers }}</span>
+              </p>
+            </div>
+            <q-space />
+            <div class="row d-flex">
+              <p class="col-6 q-mr-md" style="width: 180px">
+                <q-select
+                  dense
+                  color="green"
+                  outlined
+                  v-model="dropDownFilter"
+                  :options="options"
+                  label="Status"
+                  @input="setFilter"
+                />
+              </p>
+              <p class="col-6" style="width: 250px">
+                <q-input
+                  borderless
+                  dense
+                  outlined
+                  debounce="300"
+                  color="green"
+                  class="text-subtitle1"
+                  v-model="filter"
+                  placeholder="Search"
+                >
+                  <template v-slot:append>
+                    <q-icon name="search" color="green-4" />
+                  </template>
+                </q-input>
+              </p>
+            </div>
           </div>
           <q-table
             :grid="$q.screen.xs"
+            style="max-height: 450px; height: 100%"
             flat
             :loading="loading"
             bordered
@@ -37,11 +72,11 @@
             :columns="columns"
             virtual-scroll
             :pagination="pagination"
-            :filter="filter"
+            :rows-per-page-options="[0]"
           >
             <!-- top  -->
 
-            <template v-slot:top-left>
+            <template v-slot:top-right>
               <q-btn
                 color="green"
                 outline
@@ -51,35 +86,6 @@
                 class="text-body1 text-capitalize"
                 label="Create User"
               />
-            </template>
-            <template v-slot:top-right>
-              <div style="width: 180px">
-                <q-select
-                  dense
-                  class="q-mr-md"
-                  color="green"
-                  outlined
-                  v-model="dropDownFilter"
-                  :options="options"
-                  label="Status"
-                  @input="setFilter"
-                />
-              </div>
-
-              <q-input
-                borderless
-                dense
-                outlined
-                debounce="300"
-                color="green"
-                class="text-subtitle1"
-                v-model="filter"
-                placeholder="Search"
-              >
-                <template v-slot:append>
-                  <q-icon name="search" color="green-4" />
-                </template>
-              </q-input>
             </template>
 
             <!-- body  -->
@@ -109,7 +115,7 @@
                     label="Not Verified"
                   />
                 </q-td>
-                <q-td key="action" :props="props">
+                <q-td key="action" auto-width :props="props">
                   <q-btn
                     flat
                     round
@@ -182,32 +188,75 @@
           </q-table>
 
           <q-dialog v-model="dialogValue">
-            <q-card
-              class="my-card q-pb-md"
-              style="width: 100%; max-width: 550px"
-            >
-              <q-card-section class="row items-center q-pb-sm">
-                <div class="text-h6 text-bold">User Profile</div>
+            <q-card style="width: 100%; max-width: 450px">
+              <q-card-section class="row items-center q-pb-md">
+                <div class="text-h5 text-bold">Create User</div>
                 <q-space />
                 <q-btn icon="close" flat round dense v-close-popup />
               </q-card-section>
               <q-separator />
+              <q-separator />
+              <q-card-section class="q-pt-none q-px-lg q-mx-md">
+                <q-form @submit.prevent="onSubmit" class="q-pt-lg">
+                  <InputField
+                    outlined
+                    color="green"
+                    inputClass="q-py-sm q-mb-lg"
+                    v-model="form.firstName"
+                    :rules="[
+                      (val) =>
+                        (val && val.length > 0) || 'Please enter a first name',
+                    ]"
+                    label="First Name"
+                    iconName="person"
+                    type="text"
+                  />
+                  <InputField
+                    inputClass="q-py-sm q-mb-lg"
+                    color="green"
+                    outlined
+                    v-model="form.lastName"
+                    :rules="[
+                      (val) =>
+                        (val && val.length > 0) || 'Please enter a last name',
+                    ]"
+                    label="Last Name"
+                    iconName="person"
+                    type="text"
+                  />
+                  <InputField
+                    color="green"
+                    inputClass="q-py-sm q-mb-lg"
+                    outlined
+                    v-model="form.email"
+                    :rules="[
+                      (val) =>
+                        (val && val.length > 0) ||
+                        'Please enter an email address',
+                    ]"
+                    label="Email Address"
+                    iconName="email"
+                    type="email"
+                  />
+                  <div class="q-mb-md">
+                    <q-spinner-tail
+                      v-if="userStore.loading"
+                      class="full-width q-mt-sm"
+                      size="2rem"
+                      color="green"
+                    />
 
-              <q-item class="q-pb-lg q-mt-md q-ml-md">
-                <q-item-section side>
-                  <q-avatar round size="48px">
-                    <img src="../assets/svg-icon/user-profile.svg" alt="" />
-                  </q-avatar>
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label class="text-h6">
-                    {{ user?.firstName }} {{ user?.lastName }}</q-item-label
-                  >
-                  <q-item-label class="text-subtitle1">{{
-                    user?.email
-                  }}</q-item-label>
-                </q-item-section>
-              </q-item>
+                    <q-btn
+                      v-else
+                      color="green"
+                      class="full-width"
+                      type="submit"
+                      rounded
+                      label="Create User"
+                    />
+                  </div>
+                </q-form>
+              </q-card-section>
             </q-card>
           </q-dialog>
           <DialogBox />
@@ -223,7 +272,7 @@ import { useComponentStore } from "@/store/component-store";
 import { useUserStore } from "@/store/user-store";
 import { storeToRefs } from "pinia";
 import { Notify } from "quasar";
-import { onMounted, ref, watch, watchEffect } from "vue";
+import { onMounted, ref,  watchEffect } from "vue";
 import { useRouter } from "vue-router";
 import DialogBox from "./DialogBox.vue";
 
@@ -231,7 +280,6 @@ const router = useRouter();
 
 const componentStore = useComponentStore();
 const userStore = useUserStore();
-const { user } = storeToRefs(useUserStore());
 const { loading } = storeToRefs(useComponentStore());
 
 const options = [
@@ -248,7 +296,11 @@ const options = [
     value: "false",
   },
 ];
-
+const form = ref({
+  email: "",
+  firstName: "",
+  lastName: "",
+});
 const filter = ref("");
 const dropDownFilter = ref("");
 const users = ref({});
@@ -303,7 +355,7 @@ const toggleDialog = () => {
 };
 
 const handleCreateForm = () => {
-  toggleDialog();
+  dialogValue.value = true;
 };
 
 const setFilter = (status) => {
@@ -311,13 +363,56 @@ const setFilter = (status) => {
 };
 const handlePage = (pageNumber) => {
   page.value = pageNumber;
-  handlePagination(page.value);
+  handlePagination(page.value, "", "");
 };
 
-const handlePagination = async (pageNumber) => {
+const onSubmit = async () => {
+  useUserStore().setLoading(true);
+  await HTTP.post(`api/auth/create-user`, {
+    email: form.value.email,
+    firstName: form.value.firstName,
+    lastName: form.value.lastName,
+  })
+    .then(() => {
+      Notify.create({
+        type: "positive",
+        position: "top",
+        message: "Verification email has been send.",
+      });
+      handlePagination(page.value, { value: "" }, { value: "" });
+      useUserStore().setLoading(false);
+      dialogValue.value = false;
+      router.push("/dashboard/user-list");
+    })
+    .catch((err) => {
+      useUserStore().setLoading(false);
+
+      if (err.response?.status === 401) {
+        Notify.create({
+          type: "negative",
+          position: "top",
+          message: "Session timeout",
+        });
+        useUserStore().logoutUser();
+        router.push("/");
+      } else {
+        Notify.create({
+          type: "negative",
+          position: "top",
+          message: err.response?.data?.message,
+        });
+      }
+    });
+};
+
+const handlePagination = async (
+  pageNumber,
+  filterValue,
+  dropDownFilterValue
+) => {
   componentStore.setLoading(true);
   await HTTP.get(
-    `api/user/get-user?page=${pageNumber}&search=${filter.value}&isVerified=${dropDownFilter.value}`
+    `api/user/get-user?page=${pageNumber}&search=${filterValue?.value}&isVerified=${dropDownFilterValue?.value}`
   )
     .then((res) => {
       componentStore.setLoading(false);
@@ -331,12 +426,18 @@ const handlePagination = async (pageNumber) => {
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response?.status === 400) {
+      if (err.response?.status === 401) {
+        Notify.create({
+          type: "negative",
+          position: "top",
+          message: "Session timeout",
+        });
         useUserStore().logoutUser();
         router.push("/");
       } else {
         Notify.create({
-          message: "Users Not Found",
+          message: err.response?.data?.message,
+
           type: "negative",
           position: "top",
         });
@@ -353,17 +454,23 @@ const onRowClick = async (id) => {
     .then((res) => {
       componentStore.setLoading(false);
       userStore.getUser(res.data);
-      dialogValue.value = true;
+      toggleDialog();
     })
 
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response?.status === 400) {
+      if (err.response?.status === 401) {
+        Notify.create({
+          type: "negative",
+          position: "top",
+          message: "Session timeout",
+        });
         useUserStore().logoutUser();
         router.push("/");
       } else {
         Notify.create({
-          message: "User Not Found",
+          message: err.response?.data?.message,
+
           type: "negative",
           position: "top",
         });
@@ -387,12 +494,17 @@ const handleVerification = async (userId, userEmail) => {
     })
     .catch((err) => {
       componentStore.setLoading(false);
-      if (err.response?.status === 400) {
+      if (err.response?.status === 401) {
+        Notify.create({
+          type: "negative",
+          position: "top",
+          message: "Session timeout",
+        });
         useUserStore().logoutUser();
         router.push("/");
       } else {
         Notify.create({
-          message: "User Not Found",
+          message: err.response?.data?.message,
           type: "negative",
           position: "top",
         });
@@ -405,63 +517,18 @@ const handleVerification = async (userId, userEmail) => {
 
 watchEffect(async () => {
   componentStore.setLoading(true);
-  await HTTP.get(`api/user/get-user?search=${filter.value}`)
-    .then((res) => {
-      componentStore.setLoading(false);
-      users.value = res.data?.data;
-      page.value = res.data?.data?.pagination.page;
-      pagination.value.page = res.data?.data?.pagination.page;
-      pagination.value.totalItems = res.data?.data?.pagination.totalUsers;
-    })
-    .catch((err) => {
-      componentStore.setLoading(false);
-      if (err.response?.status === 400) {
-        useUserStore().logoutUser();
-        router.push("/");
-      } else {
-        Notify.create({
-          message: "Users Not Found",
-          type: "negative",
-          position: "top",
-        });
-      }
-    })
-    .finally(() => {
-      componentStore.setLoading(false);
-    });
-});
-watchEffect(async () => {
-  componentStore.setLoading(true);
-
-  await HTTP.get(`api/user/get-user?isVerified=${dropDownFilter.value?.value}`)
-    .then((res) => {
-      componentStore.setLoading(false);
-      users.value = res.data?.data;
-      page.value = res.data?.data?.pagination.page;
-      pagination.value.page = res.data?.data?.pagination.page;
-      pagination.value.totalItems = res.data?.data?.pagination.totalUsers;
-    })
-    .catch((err) => {
-      componentStore.setLoading(false);
-      if (err.response?.status === 400) {
-        useUserStore().logoutUser();
-        router.push("/");
-      } else {
-        Notify.create({
-          message: "Users Not Found",
-          type: "negative",
-          position: "top",
-        });
-      }
-    })
-    .finally(() => {
-      componentStore.setLoading(false);
-    });
+  // let filterValue = filter.value || "";
+  // let dropDownFilterValue = dropDownFilter.value || "";
+  handlePagination(
+    page.value,
+    filter.value || { value: "" },
+    dropDownFilter.value || { value: "" }
+  );
 });
 
 onMounted(async () => {
   componentStore.setLoading(true);
-  handlePagination(page.value);
+  handlePagination(page.value, { value: "" }, { value: "" });
 });
 </script>
 

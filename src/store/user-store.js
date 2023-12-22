@@ -11,6 +11,7 @@ export const useUserStore = defineStore("user", {
       user: null,
       profile: null,
       token: null,
+      botChat: [],
     };
   },
   getters: {},
@@ -40,14 +41,22 @@ export const useUserStore = defineStore("user", {
       this.isAdmin = payload.isAdmin;
       return true;
     },
-    async userList() {},
+
     getUser(payload) {
       this.user = payload.data;
     },
+    pushChat(payload) {
+      this.botChat.push(payload);
+    },
+
     logoutUser() {
       this.auth = null;
       this.isAuth = false;
       this.token = null;
+      this.botChat = [];
+      this.user = null;
+      this.profile = null;
+      this.isAdmin = false;
       localStorage.clear();
       return true;
     },

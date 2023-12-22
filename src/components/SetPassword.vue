@@ -133,12 +133,12 @@ const onSubmit = async () => {
       });
       router.push("/");
     })
-    .catch(() => {
+    .catch((err) => {
       userStore.setLoading(false);
       Notify.create({
         type: "negative",
         position: "top",
-        message: "Link is expired cannot set password",
+        message: err.response?.data?.message,
       });
     });
 };
