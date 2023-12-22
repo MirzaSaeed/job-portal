@@ -131,12 +131,12 @@ const onSubmit = async () => {
       });
       router.push("/dashboard");
     })
-    .catch(() => {
+    .catch((err) => {
       userStore.setLoading(false);
       Notify.create({
         type: "negative",
         position: "top",
-        message: "Invalid Credentials",
+        message: err.response?.data?.message,
       });
     });
 };
