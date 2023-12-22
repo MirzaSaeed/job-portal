@@ -27,9 +27,11 @@
 
 <script setup>
 import { useComponentStore } from "@/store/component-store";
+import { useUserStore } from "@/store/user-store";
 import { storeToRefs } from "pinia";
 
 const { dialog } = storeToRefs(useComponentStore());
+const { user } = storeToRefs(useUserStore());
 </script>
 
 <style scoped></style>

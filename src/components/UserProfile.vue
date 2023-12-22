@@ -112,7 +112,7 @@ import { useComponentStore } from "@/store/component-store";
 import { useUserStore } from "@/store/user-store";
 import { storeToRefs } from "pinia";
 import { Notify } from "quasar";
-import {  ref } from "vue";
+import { ref } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -150,10 +150,12 @@ const onSubmit = async () => {
   })
     .then(() => {
       Notify.create({
-        message: "Password has been changed",
+        message: "Password has been changed, Login again",
         type: "positive",
         position: "top",
       });
+      useUserStore().logoutUser();
+      router.push("/");
       form.value.newPassword = " ";
       form.value.confirmPassword = " ";
       form.value.oldPassword = " ";
@@ -161,12 +163,13 @@ const onSubmit = async () => {
     .catch((err) => {
       componentStore.setLoading(false);
 
-     if (err.response?.status === 401) {
+      if (err.response?.status === 401) {
         Notify.create({
           type: "negative",
           position: "top",
           message: "Session timeout",
-        }); useUserStore().logoutUser();
+        });
+        useUserStore().logoutUser();
         router.push("/");
       } else {
         Notify.create({
@@ -180,8 +183,6 @@ const onSubmit = async () => {
       componentStore.setLoading(false);
     });
 };
-
-
 </script>
 
 <style scoped>

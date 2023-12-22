@@ -74,6 +74,9 @@
                 <q-td key="age" :props="props">
                   {{ props.row.age }}
                 </q-td>
+                <q-td key="phoneNumber" :props="props">
+                  {{ props.row.phoneNumber }}
+                </q-td>
                 <q-td key="status" :props="props">
                   <q-badge
                     v-if="props.row.status === 'accepted'"
@@ -324,6 +327,12 @@ const columns = [
     sortable: true,
   },
   {
+    name: "phoneNumber",
+    align: "center",
+    label: "Phone Number",
+    field: "phoneNumber",
+  },
+  {
     name: "status",
     align: "center",
     label: "Status",
@@ -503,7 +512,7 @@ watchEffect(async () => {
   componentStore.setLoading(true);
   handlePagination(
     page.value,
-    filter.value || { value: "" },
+    filter || { value: "" },
     dropDownFilter.value || { value: "" }
   );
 });

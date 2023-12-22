@@ -40,11 +40,7 @@
                 </q-td>
 
                 <q-td key="activity" auto-width :props="props">
-                  {{
-                    `${
-                      props.row.name ? props.row.name : "User"
-                    } have perform an activity on ${props.row.activity}`
-                  }}
+                  {{ props.row.activity }}
                 </q-td>
                 <q-td key="time" :props="props">
                   {{ formatTime(props.row.createdAt) }}

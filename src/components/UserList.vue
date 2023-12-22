@@ -91,17 +91,17 @@
             <!-- body  -->
             <template v-slot:body="props">
               <q-tr :props="props">
-                <q-td key="index" :props="props">
+                <q-td key="index" auto-width :props="props">
                   {{ users?.rows?.indexOf(props.row) + 1 }}
                 </q-td>
-                <q-td key="name" :props="props">
+                <q-td key="name" auto-width :props="props">
                   {{ props.row.firstName }} {{ props.row.lastName }}
                 </q-td>
 
-                <q-td key="email" :props="props">
+                <q-td key="email" auto-width :props="props">
                   {{ props.row.email }}
                 </q-td>
-                <q-td key="status" :props="props">
+                <q-td key="status" auto-width :props="props">
                   <q-badge
                     v-if="props.row.isVerified"
                     text-color="green"
@@ -521,7 +521,7 @@ watchEffect(async () => {
   // let dropDownFilterValue = dropDownFilter.value || "";
   handlePagination(
     page.value,
-    filter.value || { value: "" },
+    filter || { value: "" },
     dropDownFilter.value || { value: "" }
   );
 });
